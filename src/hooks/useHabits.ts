@@ -189,6 +189,6 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
     newObjectId, sparklePos,
     addHabit, deleteHabit, completeHabit, isCompletedToday,
     getTotalCompletions, getLongestStreak, getCurrentStreak, getTodayCount,
-    simulateStreak,
+    simulateStreak, resetAll,
   };
 }

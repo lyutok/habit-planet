@@ -13,6 +13,7 @@ interface HabitPanelProps {
   onAddHabit: () => void;
   nextMilestone?: Milestone;
   longestStreak: number;
+  onClearAll?: () => void;
 }
 
 export function HabitPanel({

@@ -1,11 +1,12 @@
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { PlanetScene } from '@/components/PlanetScene';
 import { HabitPanel } from '@/components/HabitPanel';
 import { AddHabitModal } from '@/components/AddHabitModal';
 import { useHabits } from '@/hooks/useHabits';
-import { Flame, Globe, Sparkles, Trophy } from 'lucide-react';
+import { useDevDate } from '@/hooks/useDevDate';
+import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
 
 function LoadingPlanet() {
@@ -20,6 +21,9 @@ function LoadingPlanet() {
 }
 
 const Index = () => {
+  const { dayOffset, advanceDay, resetOffset, getToday } = useDevDate();
+  const [showDevPanel, setShowDevPanel] = useState(false);
+
   const {
     habits,
     planetObjects,
@@ -32,9 +36,18 @@ const Index = () => {
     getTotalCompletions,
     getLongestStreak,
     getTodayCount,
-  } = useHabits();
+  } = useHabits({ getToday });
 
   const [showModal, setShowModal] = useState(false);
+
+  // Toggle dev panel with 'D' key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'd' || e.key === 'D') setShowDevPanel(v => !v);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const totalCompletions = getTotalCompletions();
   const longestStreak    = getLongestStreak();
@@ -202,6 +215,51 @@ const Index = () => {
           onClose={() => setShowModal(false)}
           onAdd={addHabit}
         />
+      )}
+
+      {/* Dev Panel — toggle with 'D' key */}
+      <div
+        className={`fixed bottom-5 right-5 z-50 transition-all duration-300 ${
+          showDevPanel ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+        }`}
+      >
+        <div className="rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-4 w-56">
+          <div className="flex items-center gap-2 mb-3">
+            <FlaskConical size={14} className="text-primary" />
+            <span className="text-xs font-black text-foreground/80 uppercase tracking-wider">Dev Mode</span>
+          </div>
+          <div className="rounded-xl bg-muted/40 px-3 py-2 mb-3 text-center">
+            <div className="text-[10px] text-muted-foreground mb-0.5">Simulated date</div>
+            <div className="text-sm font-black text-foreground">{getToday()}</div>
+            {dayOffset > 0 && (
+              <div className="text-[10px] text-primary mt-0.5">+{dayOffset} day{dayOffset !== 1 ? 's' : ''} ahead</div>
+            )}
+          </div>
+          <button
+            onClick={advanceDay}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/20 hover:bg-primary/35 text-primary text-xs font-bold py-2 transition-all active:scale-95 mb-2"
+          >
+            <ChevronRight size={13} /> Advance 1 Day
+          </button>
+          <button
+            onClick={resetOffset}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground text-xs font-bold py-2 transition-all active:scale-95"
+          >
+            <RotateCcw size={12} /> Reset to Today
+          </button>
+          <p className="mt-3 text-[10px] text-muted-foreground/50 text-center">Press D to hide</p>
+        </div>
+      </div>
+
+      {/* Dev panel hint (bottom-right when hidden) */}
+      {!showDevPanel && (
+        <button
+          onClick={() => setShowDevPanel(true)}
+          className="fixed bottom-5 right-5 z-50 rounded-full border border-border/40 bg-card/70 p-2.5 backdrop-blur-sm text-muted-foreground/40 hover:text-muted-foreground transition-all hover:scale-110"
+          title="Dev panel (D)"
+        >
+          <FlaskConical size={14} />
+        </button>
       )}
     </div>
   );

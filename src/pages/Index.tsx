@@ -219,18 +219,34 @@ const Index = () => {
 
           {/* Welcome overlay */}
           {habits.length === 0 && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <div className="rounded-3xl border border-border/40 bg-card/85 p-6 sm:p-8 text-center backdrop-blur-md max-w-xs shadow-2xl animate-scale-in mx-4">
-                <div className="mb-4 text-6xl">🪐</div>
-                <h2 className="mb-2 text-xl font-black text-foreground font-display">Your planet awaits!</h2>
+            <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
+              <div className="rounded-3xl border border-border/40 bg-card/90 p-6 sm:p-8 text-center backdrop-blur-md max-w-sm w-full shadow-2xl animate-scale-in">
+                <div className="mb-3 text-6xl">🪐</div>
+                <h2 className="mb-1.5 text-2xl font-black text-foreground font-display">Your planet awaits</h2>
                 <p className="mb-5 text-sm text-muted-foreground leading-relaxed">
-                  Add habits to grow trees, flowers, mountains &amp; buildings on your very own world.
+                  Every habit you complete grows something new on your world — trees, flowers, mountains, buildings. The longer your streak, the more it transforms.
                 </p>
+
+                {/* Milestone preview */}
+                <div className="mb-5 grid grid-cols-3 gap-2 text-left">
+                  {[
+                    { emoji: '🌿', days: '7 days', title: 'Week Warrior', desc: 'Bigger trees' },
+                    { emoji: '🦋', days: '30 days', title: 'Month Master', desc: 'Animals appear' },
+                    { emoji: '✨', days: '100 days', title: 'Legend', desc: 'Glowing plants' },
+                  ].map(m => (
+                    <div key={m.days} className="rounded-2xl border border-border/30 bg-muted/30 px-2 py-2.5 flex flex-col items-center gap-1">
+                      <span className="text-xl">{m.emoji}</span>
+                      <span className="text-[10px] font-black text-primary leading-none">{m.days}</span>
+                      <span className="text-[10px] text-muted-foreground leading-tight text-center">{m.desc}</span>
+                    </div>
+                  ))}
+                </div>
+
                 <button
                   onClick={() => setShowModal(true)}
-                  className="rounded-2xl bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground hover:bg-primary/90 transition-all hover:scale-105 shadow-lg glow-green"
+                  className="w-full rounded-2xl bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground hover:bg-primary/90 transition-all hover:scale-105 shadow-lg glow-green"
                 >
-                  🌱 Plant First Habit
+                  🌱 Plant Your First Habit
                 </button>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
+import * as THREE from 'three';
 import { PlanetScene } from '@/components/PlanetScene';
 import { HabitPanel } from '@/components/HabitPanel';
 import { AddHabitModal } from '@/components/AddHabitModal';
@@ -136,10 +137,10 @@ const Index = () => {
           )}
 
           <Canvas
-            camera={{ position: [0, 0, 5], fov: 50 }}
+            camera={{ position: [0, 2, 5.5], fov: 48 }}
             shadows
             style={{ background: 'transparent' }}
-            gl={{ antialias: true, alpha: true }}
+            gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
           >
             <Suspense fallback={null}>
               <PlanetScene

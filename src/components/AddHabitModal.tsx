@@ -12,7 +12,7 @@ interface AddHabitModalProps {
 const PRESET_ICONS: Record<HabitType, string[]> = {
   tree:     ['📚', '📖', '🎓', '🧠', '✏️', '🔬'],
   flower:   ['🧘', '🌿', '💆', '🫁', '💜', '🕯️'],
-  mountain: ['🏃', '💪', '🚴', '🏋️', '⚽', '🥊'],
+  mountain: ['🏃', '💪', '🚴', '🏋️', '⚽', '🥊', '🏊'],
   building: ['💻', '🎯', '🔧', '🎨', '📊', '🚀'],
 };
 

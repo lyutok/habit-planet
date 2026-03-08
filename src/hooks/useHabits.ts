@@ -97,6 +97,7 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
     const newObj: PlanetObject = {
       id: objId,
       type: habit.type,
+      subType: ICON_TO_SUBTYPE[habit.icon],
       position: pos,
       scale,
       color: randomColor(habit.type, isMilestone),

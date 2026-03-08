@@ -284,98 +284,99 @@ const Index = () => {
         />
       )}
 
-      {/* Dev Panel — toggle with 'D' key */}
-      <div
-        className={`fixed bottom-20 right-5 z-50 transition-all duration-300 sm:bottom-5 ${
-          showDevPanel ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-        }`}
-      >
-        <div className="rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-4 w-56">
-          <div className="flex items-center gap-2 mb-3">
-            <FlaskConical size={14} className="text-primary" />
-            <span className="text-xs font-black text-foreground/80 uppercase tracking-wider">Dev Mode</span>
-          </div>
-          <div className="rounded-xl bg-muted/40 px-3 py-2 mb-3 text-center">
-            <div className="text-[10px] text-muted-foreground mb-0.5">Simulated date</div>
-            <div className="text-sm font-black text-foreground">{getToday()}</div>
-            {dayOffset > 0 && (
-              <div className="text-[10px] text-primary mt-0.5">+{dayOffset} day{dayOffset !== 1 ? 's' : ''} ahead</div>
-            )}
-          </div>
-          <button
-            onClick={advanceDay}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/20 hover:bg-primary/35 text-primary text-xs font-bold py-2 transition-all active:scale-95 mb-3"
+      {/* Dev Panel — only in development builds */}
+      {isDev && (
+        <>
+          <div
+            className={`fixed bottom-20 right-5 z-50 transition-all duration-300 sm:bottom-5 ${
+              showDevPanel ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+            }`}
           >
-            <ChevronRight size={13} /> Advance 1 Day
-          </button>
+            <div className="rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-4 w-56">
+              <div className="flex items-center gap-2 mb-3">
+                <FlaskConical size={14} className="text-primary" />
+                <span className="text-xs font-black text-foreground/80 uppercase tracking-wider">Dev Mode</span>
+              </div>
+              <div className="rounded-xl bg-muted/40 px-3 py-2 mb-3 text-center">
+                <div className="text-[10px] text-muted-foreground mb-0.5">Simulated date</div>
+                <div className="text-sm font-black text-foreground">{getToday()}</div>
+                {dayOffset > 0 && (
+                  <div className="text-[10px] text-primary mt-0.5">+{dayOffset} day{dayOffset !== 1 ? 's' : ''} ahead</div>
+                )}
+              </div>
+              <button
+                onClick={advanceDay}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/20 hover:bg-primary/35 text-primary text-xs font-bold py-2 transition-all active:scale-95 mb-3"
+              >
+                <ChevronRight size={13} /> Advance 1 Day
+              </button>
 
-          {/* Streak simulation shortcuts */}
-          <div className="mb-1">
-            <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-1.5">Simulate streak</p>
-            <div className="flex flex-col gap-1.5">
-              {([
-                { days: 7,   label: '🌿 7 days',   hint: 'Bigger trees' },
-                { days: 30,  label: '🦋 30 days',  hint: 'Animals appear' },
-                { days: 100, label: '✨ 100 days', hint: 'Glow plants' },
-              ] as const).map(({ days, label, hint }) => (
-                <button
-                  key={days}
-                  onClick={() => { simulateStreak(days); jumpDays(days); }}
-                  disabled={habits.length === 0}
-                  className="flex w-full items-center justify-between rounded-xl bg-accent/20 hover:bg-accent/35 text-accent-foreground text-xs font-bold px-3 py-1.5 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <span>{label}</span>
-                  <span className="text-[10px] text-muted-foreground font-normal">{hint}</span>
-                </button>
-              ))}
+              <div className="mb-1">
+                <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-1.5">Simulate streak</p>
+                <div className="flex flex-col gap-1.5">
+                  {([
+                    { days: 7,   label: '🌿 7 days',   hint: 'Bigger trees' },
+                    { days: 30,  label: '🦋 30 days',  hint: 'Animals appear' },
+                    { days: 100, label: '✨ 100 days', hint: 'Glow plants' },
+                  ] as const).map(({ days, label, hint }) => (
+                    <button
+                      key={days}
+                      onClick={() => { simulateStreak(days); jumpDays(days); }}
+                      disabled={habits.length === 0}
+                      className="flex w-full items-center justify-between rounded-xl bg-accent/20 hover:bg-accent/35 text-accent-foreground text-xs font-bold px-3 py-1.5 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <span>{label}</span>
+                      <span className="text-[10px] text-muted-foreground font-normal">{hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={resetOffset}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground text-xs font-bold py-2 transition-all active:scale-95 mt-1"
+              >
+                <RotateCcw size={12} /> Reset to Today
+              </button>
+
+              <div className="mt-2 border-t border-destructive/20 pt-2">
+                {confirmReset ? (
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => { resetAll(); resetOffset(); setConfirmReset(false); }}
+                      className="flex-1 rounded-xl bg-destructive text-destructive-foreground text-xs font-black py-2 transition-all active:scale-95 hover:bg-destructive/90"
+                    >
+                      ☠️ Confirm
+                    </button>
+                    <button
+                      onClick={() => setConfirmReset(false)}
+                      className="flex-1 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground text-xs font-bold py-2 transition-all active:scale-95"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmReset(true)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold py-2 transition-all active:scale-95"
+                  >
+                    🗑️ Reset All Data
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
-          <button
-            onClick={resetOffset}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground text-xs font-bold py-2 transition-all active:scale-95 mt-1"
-          >
-            <RotateCcw size={12} /> Reset to Today
-          </button>
-
-          {/* Destructive reset */}
-          <div className="mt-2 border-t border-destructive/20 pt-2">
-            {confirmReset ? (
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => { resetAll(); resetOffset(); setConfirmReset(false); }}
-                  className="flex-1 rounded-xl bg-destructive text-destructive-foreground text-xs font-black py-2 transition-all active:scale-95 hover:bg-destructive/90"
-                >
-                  ☠️ Confirm
-                </button>
-                <button
-                  onClick={() => setConfirmReset(false)}
-                  className="flex-1 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground text-xs font-bold py-2 transition-all active:scale-95"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setConfirmReset(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold py-2 transition-all active:scale-95"
-              >
-                🗑️ Reset All Data
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Dev panel hint (bottom-right when hidden) */}
-      {!showDevPanel && (
-        <button
-          onClick={() => setShowDevPanel(true)}
-          className="fixed bottom-20 right-5 z-50 rounded-full border border-border/40 bg-card/70 p-2.5 backdrop-blur-sm text-muted-foreground/40 hover:text-muted-foreground transition-all hover:scale-110 sm:bottom-5"
-          title="Dev panel (D)"
-        >
-          <FlaskConical size={14} />
-        </button>
+          {!showDevPanel && (
+            <button
+              onClick={() => setShowDevPanel(true)}
+              className="fixed bottom-20 right-5 z-50 rounded-full border border-border/40 bg-card/70 p-2.5 backdrop-blur-sm text-muted-foreground/40 hover:text-muted-foreground transition-all hover:scale-110 sm:bottom-5"
+              title="Dev panel (D)"
+            >
+              <FlaskConical size={14} />
+            </button>
+          )}
+        </>
       )}
     </div>
   );

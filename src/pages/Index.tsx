@@ -47,6 +47,7 @@ const Index = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   // Toggle dev panel with 'D' key
   useEffect(() => {

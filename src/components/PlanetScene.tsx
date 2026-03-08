@@ -1062,8 +1062,7 @@ function PlanetObjectMesh({ obj, isNew }: { obj: PlanetObject; isNew: boolean })
     else if (sub === 'sunflower') mesh = <Sunflower {...props} />;
     else                         mesh = <Daisy    {...props} />;
   } else if (obj.type === 'mountain') {
-    if (sub === 'volcano')  mesh = <Volcano  {...props} />;
-    else if (sub === 'hill')    mesh = <Hill     {...props} />;
+    if (sub === 'hill')         mesh = <Hill     {...props} />;
     else if (sub === 'glacier') mesh = <Glacier  {...props} />;
     else                        mesh = <Peak     {...props} />;
   } else {

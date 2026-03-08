@@ -1073,13 +1073,6 @@ interface PlanetSceneProps {
 }
 
 // Fixed positions for milestone creatures/plants so they don't re-randomize
-const BUTTERFLY_POSITIONS: [number,number,number][] = [
-  [1.8,  0.3,  0.6],
-  [-1.4, 0.1,  1.6],
-  [0.6, -0.4, -1.9],
-  [-1.9, 0.5, -0.4],
-  [1.2,  0.8, -1.5],
-];
 const ANIMAL_POSITIONS: [number,number,number][] = [
   [ 0.6,  1.4,  0.7],
   [-0.8,  1.1, -0.9],
@@ -1104,12 +1097,12 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
 
   const hasAnimalMilestone    = longestStreak >= 30;
   const hasGlowPlantMilestone = longestStreak >= 100;
-  const hasButterflies        = longestStreak >= 30;
+  const hasRings              = longestStreak >= 30;
 
-  // How many butterflies/animals/plants to show scales with streak
-  const butterflyCount = hasButterflies     ? Math.min(5, 1 + Math.floor((longestStreak - 30) / 20)) : 0;
-  const animalCount    = hasAnimalMilestone ? Math.min(4, 1 + Math.floor((longestStreak - 30) / 25)) : 0;
-  const glowCount      = hasGlowPlantMilestone ? Math.min(6, 1 + Math.floor((longestStreak - 100) / 15)) : 0;
+  // How many rings/animals/plants to show scales with streak
+  const ringCount   = hasRings             ? Math.min(5, 1 + Math.floor((longestStreak - 30) / 20)) : 0;
+  const animalCount = hasAnimalMilestone   ? Math.min(4, 1 + Math.floor((longestStreak - 30) / 25)) : 0;
+  const glowCount   = hasGlowPlantMilestone ? Math.min(6, 1 + Math.floor((longestStreak - 100) / 15)) : 0;
 
   return (
     <>
@@ -1141,10 +1134,8 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
       {/* Camera pulse */}
       <CameraZoomPulse active={!!newObjectId} />
 
-      {/* 30-day milestone: Butterflies orbit the planet */}
-      {Array.from({ length: butterflyCount }, (_, i) => (
-        <Butterfly key={i} pos={BUTTERFLY_POSITIONS[i]} index={i} />
-      ))}
+      {/* 30-day milestone: Orbital rings around the planet */}
+      {ringCount > 0 && <PlanetRings count={ringCount} />}
 
       <OrbitControls
         enablePan={false}

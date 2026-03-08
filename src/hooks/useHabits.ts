@@ -5,7 +5,7 @@ const HABITS_KEY = 'habitplanet_habits_v2';
 const ENTRIES_KEY = 'habitplanet_entries_v2';
 const PLANET_KEY  = 'habitplanet_objects_v2';
 
-function today() {
+function defaultToday() {
   return new Date().toISOString().split('T')[0];
 }
 function uid() {

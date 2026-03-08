@@ -24,6 +24,14 @@ export function useDevDate() {
     localStorage.removeItem(DEV_OFFSET_KEY);
   }, []);
 
+  const jumpDays = useCallback((n: number) => {
+    setDayOffset(prev => {
+      const next = prev + n;
+      localStorage.setItem(DEV_OFFSET_KEY, String(next));
+      return next;
+    });
+  }, []);
+
   /** Returns today's date string offset by dayOffset days */
   const getToday = useCallback((): string => {
     const d = new Date();

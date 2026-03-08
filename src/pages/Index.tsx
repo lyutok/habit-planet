@@ -38,9 +38,11 @@ const Index = () => {
     getCurrentStreak,
     getTodayCount,
     simulateStreak,
+    resetAll,
   } = useHabits({ getToday });
 
   const [showModal, setShowModal] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   // Toggle dev panel with 'D' key
   useEffect(() => {
@@ -282,7 +284,33 @@ const Index = () => {
           >
             <RotateCcw size={12} /> Reset to Today
           </button>
-          <p className="mt-3 text-[10px] text-muted-foreground/50 text-center">Press D to hide</p>
+
+          {/* Destructive reset */}
+          <div className="mt-2 border-t border-destructive/20 pt-2">
+            {confirmReset ? (
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => { resetAll(); resetOffset(); setConfirmReset(false); }}
+                  className="flex-1 rounded-xl bg-destructive text-destructive-foreground text-xs font-black py-2 transition-all active:scale-95 hover:bg-destructive/90"
+                >
+                  ☠️ Confirm
+                </button>
+                <button
+                  onClick={() => setConfirmReset(false)}
+                  className="flex-1 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground text-xs font-bold py-2 transition-all active:scale-95"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmReset(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold py-2 transition-all active:scale-95"
+              >
+                🗑️ Reset All Data
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

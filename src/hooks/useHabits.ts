@@ -111,6 +111,17 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
     setTimeout(() => setSparklePos(null), 2000);
   }, [habits, isCompletedToday, todayFn]);
 
+  const resetAll = useCallback(() => {
+    setHabits([]);
+    setEntries([]);
+    setPlanetObjects([]);
+    setNewObjectId(null);
+    setSparklePos(null);
+    localStorage.removeItem(HABITS_KEY);
+    localStorage.removeItem(ENTRIES_KEY);
+    localStorage.removeItem(PLANET_KEY);
+  }, []);
+
   const getTotalCompletions = useCallback(() =>
     entries.filter(e => e.completed).length, [entries]);
 
@@ -178,6 +189,6 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
     newObjectId, sparklePos,
     addHabit, deleteHabit, completeHabit, isCompletedToday,
     getTotalCompletions, getLongestStreak, getCurrentStreak, getTodayCount,
-    simulateStreak,
+    simulateStreak, resetAll,
   };
 }

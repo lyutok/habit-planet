@@ -84,7 +84,7 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Stats row */}
+        {/* Stats + Clear button row */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Today */}
           <div className="stat-chip">
@@ -131,6 +131,35 @@ const Index = () => {
                 <div className="stat-label">{prevMilestone.description}</div>
               </div>
             </div>
+          )}
+
+          {/* Clear All button */}
+          {habits.length > 0 && (
+            confirmClear ? (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => { resetAll(); setConfirmClear(false); }}
+                  className="rounded-lg bg-destructive px-2.5 py-1 text-[11px] font-black text-destructive-foreground transition-all active:scale-95 hover:bg-destructive/90"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setConfirmClear(false)}
+                  className="rounded-lg border border-border/60 bg-card/60 px-2.5 py-1 text-[11px] font-bold text-muted-foreground transition-all active:scale-95 hover:bg-muted/40"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmClear(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-[11px] font-bold text-destructive transition-all hover:bg-destructive/20 active:scale-95"
+                title="Clear all data"
+              >
+                <Trash2 size={11} />
+                <span className="hidden sm:inline">Clear All</span>
+              </button>
+            )
           )}
         </div>
       </header>

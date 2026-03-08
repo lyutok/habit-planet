@@ -5,9 +5,6 @@ const HABITS_KEY = 'habitplanet_habits_v2';
 const ENTRIES_KEY = 'habitplanet_entries_v2';
 const PLANET_KEY  = 'habitplanet_objects_v2';
 
-function defaultToday() {
-  return new Date().toISOString().split('T')[0];
-}
 function uid() {
   return Math.random().toString(36).substring(2, 11);
 }
@@ -34,7 +31,17 @@ function load<T>(key: string, fallback: T): T {
   } catch { return fallback; }
 }
 
-export function useHabits() {
+interface UseHabitsOptions {
+  /** Override today's date string (YYYY-MM-DD) for testing */
+  getToday?: () => string;
+}
+
+export function useHabits({ getToday }: UseHabitsOptions = {}) {
+  const todayFn = useCallback(
+    () => getToday ? getToday() : new Date().toISOString().split('T')[0],
+    [getToday]
+  );
+
   const [habits,        setHabits]        = useState<Habit[]>       (() => load(HABITS_KEY, []));
   const [entries,       setEntries]        = useState<HabitEntry[]> (() => load(ENTRIES_KEY, []));
   const [planetObjects, setPlanetObjects] = useState<PlanetObject[]>(() => load(PLANET_KEY, []));
@@ -46,9 +53,9 @@ export function useHabits() {
   useEffect(() => { localStorage.setItem(PLANET_KEY,  JSON.stringify(planetObjects)); }, [planetObjects]);
 
   const isCompletedToday = useCallback((habitId: string) => {
-    const t = today();
+    const t = todayFn();
     return entries.some(e => e.habitId === habitId && e.date === t && e.completed);
-  }, [entries]);
+  }, [entries, todayFn]);
 
   const addHabit = useCallback((name: string, type: HabitType, icon: string) => {
     setHabits(prev => [...prev, {
@@ -64,7 +71,7 @@ export function useHabits() {
   const completeHabit = useCallback((habitId: string) => {
     if (isCompletedToday(habitId)) return;
 
-    const t = today();
+    const t = todayFn();
     setEntries(prev => [...prev, { habitId, date: t, completed: true }]);
 
     let newStreak = 0;
@@ -102,7 +109,7 @@ export function useHabits() {
     setSparklePos(pos);
     setTimeout(() => setNewObjectId(null), 2000);
     setTimeout(() => setSparklePos(null), 2000);
-  }, [habits, isCompletedToday]);
+  }, [habits, isCompletedToday, todayFn]);
 
   const getTotalCompletions = useCallback(() =>
     entries.filter(e => e.completed).length, [entries]);

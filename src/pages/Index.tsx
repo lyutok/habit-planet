@@ -25,6 +25,7 @@ const Index = () => {
   const { dayOffset, advanceDay, resetOffset, getToday, jumpDays } = useDevDate();
   const [showDevPanel, setShowDevPanel] = useState(false);
   const isMobile = useIsMobile();
+  const isDev = import.meta.env.DEV;
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const {

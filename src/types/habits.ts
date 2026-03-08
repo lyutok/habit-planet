@@ -3,7 +3,7 @@ export type HabitType = 'tree' | 'flower' | 'mountain' | 'building';
 // Sub-types per category — drives distinct 3D shapes
 export type TreeSubType     = 'pine' | 'palm' | 'oak' | 'cactus';
 export type FlowerSubType   = 'daisy' | 'tulip' | 'lotus' | 'sunflower';
-export type MountainSubType = 'peak' | 'volcano' | 'hill' | 'glacier';
+export type MountainSubType = 'peak' | 'hill' | 'glacier';
 export type BuildingSubType = 'tower' | 'dome' | 'cabin' | 'skyscraper';
 export type ObjectSubType   = TreeSubType | FlowerSubType | MountainSubType | BuildingSubType;
 
@@ -14,8 +14,8 @@ export const ICON_TO_SUBTYPE: Record<string, ObjectSubType> = {
   // flower
   '🧘': 'lotus', '🌿': 'daisy', '💆': 'tulip', '🫁': 'lotus', '💜': 'tulip', '🕯️': 'sunflower',
   // mountain
-  '🏃': 'peak', '💪': 'volcano', '🚴': 'hill', '🏋️': 'volcano', '⚽': 'hill',
-  '🥊': 'volcano', '🏊': 'glacier',
+  '🏃': 'peak', '💪': 'peak', '🚴': 'hill', '🏋️': 'peak', '⚽': 'hill',
+  '🥊': 'peak', '🏊': 'glacier',
   // building
   '💻': 'tower', '🎯': 'skyscraper', '🔧': 'cabin', '🎨': 'dome', '📊': 'skyscraper', '🚀': 'tower',
 };

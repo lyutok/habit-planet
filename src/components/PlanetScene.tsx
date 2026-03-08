@@ -439,50 +439,6 @@ function Peak({ pos, scale, color, milestone }: { pos:[number,number,number]; sc
   );
 }
 
-// ─── Volcano (💪/🥊 — power/strength) ─────────────────────────────
-function Volcano({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
-  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
-    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
-  ), [pos]);
-  const lavaRef = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (lavaRef.current) {
-      (lavaRef.current.material as THREE.MeshPhongMaterial).emissiveIntensity =
-        0.6 + Math.sin(clock.elapsedTime * 2.5) * 0.35;
-    }
-  });
-  return (
-    <group position={pos} quaternion={q} scale={scale}>
-      <mesh castShadow position={[0,0.12,0]}>
-        <coneGeometry args={[0.9,0.2,7]} />
-        <meshPhongMaterial color={tint(color,-0.15)} flatShading />
-      </mesh>
-      <mesh castShadow position={[0,0.6,0]}>
-        <coneGeometry args={[0.72,1.0,7]} />
-        <meshPhongMaterial color={color} flatShading shininess={6} />
-      </mesh>
-      {/* crater rim */}
-      <mesh castShadow position={[0,1.12,0]}>
-        <torusGeometry args={[0.26,0.07,5,10]} />
-        <meshPhongMaterial color={tint(color,-0.1)} flatShading />
-      </mesh>
-      {/* lava glow */}
-      <mesh ref={lavaRef} castShadow position={[0,1.1,0]}>
-        <cylinderGeometry args={[0.22,0.24,0.04,10]} />
-        <meshPhongMaterial color={milestone?'#ffaa00':'#ff4400'} flatShading
-          emissive={milestone?'#ff8800':'#ff2200'} emissiveIntensity={0.6} />
-      </mesh>
-      {/* lava drips */}
-      {milestone && [-0.15,0.15].map((x,i) => (
-        <mesh key={i} castShadow position={[x,0.85+i*0.1,0.2]}>
-          <sphereGeometry args={[0.07,5,4]} />
-          <meshPhongMaterial color="#ff6600" flatShading emissive="#ff4400" emissiveIntensity={0.7} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
 // ─── Hill (🚴/⚽ — gentle rolling hill) ────────────────────────────
 function Hill({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
   const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
@@ -1062,8 +1018,7 @@ function PlanetObjectMesh({ obj, isNew }: { obj: PlanetObject; isNew: boolean })
     else if (sub === 'sunflower') mesh = <Sunflower {...props} />;
     else                         mesh = <Daisy    {...props} />;
   } else if (obj.type === 'mountain') {
-    if (sub === 'volcano')  mesh = <Volcano  {...props} />;
-    else if (sub === 'hill')    mesh = <Hill     {...props} />;
+    if (sub === 'hill')         mesh = <Hill     {...props} />;
     else if (sub === 'glacier') mesh = <Glacier  {...props} />;
     else                        mesh = <Peak     {...props} />;
   } else {

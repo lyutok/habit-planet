@@ -39,5 +39,5 @@ export function useDevDate() {
     return d.toISOString().split('T')[0];
   }, [dayOffset]);
 
-  return { dayOffset, advanceDay, resetOffset, getToday };
+  return { dayOffset, advanceDay, resetOffset, getToday, jumpDays };
 }

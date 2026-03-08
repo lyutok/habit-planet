@@ -21,7 +21,7 @@ function LoadingPlanet() {
 }
 
 const Index = () => {
-  const { dayOffset, advanceDay, resetOffset, getToday } = useDevDate();
+  const { dayOffset, advanceDay, resetOffset, getToday, jumpDays } = useDevDate();
   const [showDevPanel, setShowDevPanel] = useState(false);
 
   const {

@@ -21,6 +21,9 @@ function LoadingPlanet() {
 }
 
 const Index = () => {
+  const { dayOffset, advanceDay, resetOffset, getToday } = useDevDate();
+  const [showDevPanel, setShowDevPanel] = useState(false);
+
   const {
     habits,
     planetObjects,
@@ -33,9 +36,18 @@ const Index = () => {
     getTotalCompletions,
     getLongestStreak,
     getTodayCount,
-  } = useHabits();
+  } = useHabits({ getToday });
 
   const [showModal, setShowModal] = useState(false);
+
+  // Toggle dev panel with 'D' key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'd' || e.key === 'D') setShowDevPanel(v => !v);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const totalCompletions = getTotalCompletions();
   const longestStreak    = getLongestStreak();

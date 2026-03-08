@@ -2,7 +2,7 @@ import { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars, Environment } from '@react-three/drei';
 import * as THREE from 'three';
-import { PlanetObject, HabitType } from '@/types/habits';
+import { PlanetObject } from '@/types/habits';
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 function tint(hex: string, d: number): string {
@@ -65,8 +65,12 @@ function Planet() {
   );
 }
 
-// ─── Tree ─────────────────────────────────────────────────────────────────────
-function Tree({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+// ═══════════════════════════════════════════════════════════════════
+// TREE VARIANTS
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── Pine (default conifer — original Tree) ───────────────────────
+function Pine({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
   const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
     new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
   ), [pos]);
@@ -77,7 +81,6 @@ function Tree({ pos, scale, color, milestone }: { pos:[number,number,number]; sc
       mat.opacity = milestone ? 0.25 + Math.sin(clock.elapsedTime * 2) * 0.12 : 0;
     }
   });
-
   return (
     <group position={pos} quaternion={q} scale={scale}>
       <mesh castShadow position={[0,0.06,0]}>
@@ -100,7 +103,6 @@ function Tree({ pos, scale, color, milestone }: { pos:[number,number,number]; sc
         <coneGeometry args={[0.22,0.44,6]} />
         <meshPhongMaterial color={tint(color,0.14)} flatShading shininess={12} />
       </mesh>
-      {/* Milestone glow */}
       {milestone && (
         <mesh ref={glowRef} position={[0,1.2,0]}>
           <sphereGeometry args={[0.7,12,8]} />
@@ -111,8 +113,139 @@ function Tree({ pos, scale, color, milestone }: { pos:[number,number,number]; sc
   );
 }
 
-// ─── Flower ───────────────────────────────────────────────────────────────────
-function Flower({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+// ─── Palm (🎓 — learning/graduation) ──────────────────────────────
+function Palm({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      {/* trunk — curved via a tilted cylinder stack */}
+      <mesh castShadow position={[0, 0.3, 0]}>
+        <cylinderGeometry args={[0.1, 0.14, 0.6, 7]} />
+        <meshPhongMaterial color="#8b5e2a" flatShading />
+      </mesh>
+      <mesh castShadow position={[0.06, 0.9, 0]} rotation={[0,0,0.07]}>
+        <cylinderGeometry args={[0.085, 0.1, 0.65, 7]} />
+        <meshPhongMaterial color="#9b6e35" flatShading />
+      </mesh>
+      <mesh castShadow position={[0.12, 1.5, 0]} rotation={[0,0,0.14]}>
+        <cylinderGeometry args={[0.065, 0.085, 0.65, 7]} />
+        <meshPhongMaterial color="#9b6e35" flatShading />
+      </mesh>
+      {/* fronds */}
+      {Array.from({length:6}).map((_,i) => {
+        const a = (i/6)*Math.PI*2;
+        return (
+          <mesh key={i} castShadow position={[0.14+Math.cos(a)*0.35, 1.82, Math.sin(a)*0.35]} rotation={[Math.cos(a)*0.7, a, Math.sin(a)*0.5]}>
+            <boxGeometry args={[0.48, 0.05, 0.1]} />
+            <meshPhongMaterial color={milestone ? tint(color,0.2) : color} flatShading shininess={18} />
+          </mesh>
+        );
+      })}
+      {/* coconuts */}
+      {[0.05, 0.18, -0.1].map((x,i) => (
+        <mesh key={i} castShadow position={[0.14+x, 1.68, i*0.08-0.06]}>
+          <sphereGeometry args={[0.09, 5, 4]} />
+          <meshPhongMaterial color="#5a3010" flatShading />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ─── Oak (📖/🔬 — round canopy) ────────────────────────────────────
+function Oak({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  const glowRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (glowRef.current && milestone) {
+      (glowRef.current.material as THREE.MeshPhongMaterial).opacity = 0.18 + Math.sin(clock.elapsedTime*1.5)*0.09;
+    }
+  });
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      <mesh castShadow position={[0,0.06,0]}>
+        <cylinderGeometry args={[0.15,0.2,0.12,6]} />
+        <meshPhongMaterial color="#5a2d0c" flatShading />
+      </mesh>
+      <mesh castShadow position={[0,0.7,0]}>
+        <cylinderGeometry args={[0.1,0.15,1.2,6]} />
+        <meshPhongMaterial color="#6b3510" flatShading />
+      </mesh>
+      {/* round canopy clusters */}
+      {[
+        [0,1.55,0,0.62],[-0.3,1.35,0.2,0.42],[0.3,1.35,-0.15,0.44],
+        [-0.25,1.6,-0.2,0.38],[0.2,1.65,0.25,0.36],[0,1.8,0,0.32],
+      ].map(([x,y,z,r],i) => (
+        <mesh key={i} castShadow position={[x,y,z]}>
+          <sphereGeometry args={[r,6,5]} />
+          <meshPhongMaterial color={i%2===0?color:tint(color,0.08)} flatShading shininess={8} />
+        </mesh>
+      ))}
+      {milestone && (
+        <mesh ref={glowRef} position={[0,1.6,0]}>
+          <sphereGeometry args={[0.85,10,8]} />
+          <meshPhongMaterial color={color} transparent opacity={0.18} depthWrite={false} side={THREE.BackSide} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+// ─── Cactus (🧠 — resilience) ──────────────────────────────────────
+function Cactus({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      {/* main trunk */}
+      <mesh castShadow position={[0,0.7,0]}>
+        <cylinderGeometry args={[0.2,0.22,1.4,8]} />
+        <meshPhongMaterial color={color} flatShading shininess={12} />
+      </mesh>
+      {/* top rounded cap */}
+      <mesh castShadow position={[0,1.42,0]}>
+        <sphereGeometry args={[0.21,7,6]} />
+        <meshPhongMaterial color={tint(color,0.1)} flatShading />
+      </mesh>
+      {/* left arm */}
+      <mesh castShadow position={[-0.38,0.9,0]} rotation={[0,0,-Math.PI/2.2]}>
+        <cylinderGeometry args={[0.12,0.14,0.55,7]} />
+        <meshPhongMaterial color={color} flatShading />
+      </mesh>
+      <mesh castShadow position={[-0.6,1.08,0]}>
+        <cylinderGeometry args={[0.11,0.12,0.4,7]} />
+        <meshPhongMaterial color={tint(color,0.06)} flatShading />
+      </mesh>
+      {/* right arm */}
+      <mesh castShadow position={[0.38,1.05,0]} rotation={[0,0,Math.PI/2.4]}>
+        <cylinderGeometry args={[0.12,0.13,0.45,7]} />
+        <meshPhongMaterial color={color} flatShading />
+      </mesh>
+      <mesh castShadow position={[0.58,1.22,0]}>
+        <cylinderGeometry args={[0.1,0.12,0.35,7]} />
+        <meshPhongMaterial color={tint(color,0.06)} flatShading />
+      </mesh>
+      {milestone && (
+        <mesh castShadow position={[0,1.62,0]}>
+          <sphereGeometry args={[0.16,6,5]} />
+          <meshPhongMaterial color="#ff88bb" flatShading emissive="#ff44aa" emissiveIntensity={0.6} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FLOWER VARIANTS
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── Daisy (default — original Flower) ───────────────────────────
+function Daisy({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
   const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
     new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
   ), [pos]);
@@ -120,7 +253,6 @@ function Flower({ pos, scale, color, milestone }: { pos:[number,number,number]; 
   useFrame(({ clock }) => {
     if (groupRef.current) groupRef.current.rotation.y = clock.elapsedTime * (milestone ? 1.2 : 0.6);
   });
-
   const petals = milestone ? 8 : 6;
   return (
     <group position={pos} quaternion={q} scale={scale}>
@@ -151,8 +283,136 @@ function Flower({ pos, scale, color, milestone }: { pos:[number,number,number]; 
   );
 }
 
-// ─── Mountain ─────────────────────────────────────────────────────────────────
-function Mountain({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+// ─── Tulip (💆/💜 — cup-shaped) ────────────────────────────────────
+function Tulip({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      {/* stem */}
+      <mesh castShadow position={[0,0.45,0]}>
+        <cylinderGeometry args={[0.04,0.05,0.9,6]} />
+        <meshPhongMaterial color="#2d8a40" flatShading />
+      </mesh>
+      {/* leaf */}
+      <mesh castShadow position={[-0.18,0.36,0]} rotation={[0,0,0.6]}>
+        <boxGeometry args={[0.28,0.06,0.04]} />
+        <meshPhongMaterial color="#38a050" flatShading />
+      </mesh>
+      {/* cup petals */}
+      {Array.from({length:5}).map((_,i) => {
+        const a = (i/5)*Math.PI*2;
+        return (
+          <mesh key={i} castShadow position={[Math.cos(a)*0.18, 1.05, Math.sin(a)*0.18]}>
+            <capsuleGeometry args={[0.1, 0.28, 4, 7]} />
+            <meshPhongMaterial color={i%2===0?color:tint(color,0.1)} flatShading shininess={22}
+              emissive={milestone?color:'#000'} emissiveIntensity={milestone?0.35:0} />
+          </mesh>
+        );
+      })}
+      {/* inner center */}
+      <mesh castShadow position={[0, 0.92, 0]}>
+        <sphereGeometry args={[0.14, 6, 5]} />
+        <meshPhongMaterial color={tint(color,-0.1)} flatShading />
+      </mesh>
+    </group>
+  );
+}
+
+// ─── Lotus (🧘/🫁 — floating pad) ─────────────────────────────────
+function Lotus({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  const spinRef = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (spinRef.current) spinRef.current.rotation.y = clock.elapsedTime * 0.4;
+  });
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      {/* pad */}
+      <mesh castShadow position={[0,0.04,0]}>
+        <cylinderGeometry args={[0.52,0.5,0.06,10]} />
+        <meshPhongMaterial color="#2d8a40" flatShading />
+      </mesh>
+      <group ref={spinRef} position={[0, 0.28, 0]}>
+        {/* outer petals */}
+        {Array.from({length:8}).map((_,i) => {
+          const a = (i/8)*Math.PI*2;
+          return (
+            <mesh key={i} castShadow position={[Math.cos(a)*0.32, 0, Math.sin(a)*0.32]}>
+              <capsuleGeometry args={[0.08, 0.26, 3, 6]} />
+              <meshPhongMaterial color={color} flatShading shininess={28}
+                emissive={milestone?color:'#000'} emissiveIntensity={milestone?0.4:0} />
+            </mesh>
+          );
+        })}
+        {/* inner petals */}
+        {Array.from({length:5}).map((_,i) => {
+          const a = (i/5)*Math.PI*2 + 0.3;
+          return (
+            <mesh key={i} castShadow position={[Math.cos(a)*0.16, 0.14, Math.sin(a)*0.16]}>
+              <capsuleGeometry args={[0.07, 0.18, 3, 5]} />
+              <meshPhongMaterial color={tint(color,0.12)} flatShading shininess={30} />
+            </mesh>
+          );
+        })}
+        {/* stamen */}
+        <mesh castShadow position={[0,0.26,0]}>
+          <sphereGeometry args={[0.1,6,5]} />
+          <meshPhongMaterial color="#ffe060" flatShading emissive="#ffcc00" emissiveIntensity={0.6} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+// ─── Sunflower (🕯️ — tall with big head) ──────────────────────────
+function Sunflower({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      {/* tall stem */}
+      <mesh castShadow position={[0,0.75,0]}>
+        <cylinderGeometry args={[0.055,0.07,1.5,7]} />
+        <meshPhongMaterial color="#3d9e3d" flatShading />
+      </mesh>
+      {/* leaves */}
+      {[0.5,0.9].map((y,i) => (
+        <mesh key={i} castShadow position={[i%2===0?0.22:-0.22, y, 0]} rotation={[0,0,i%2===0?0.7:-0.7]}>
+          <boxGeometry args={[0.3,0.07,0.05]} />
+          <meshPhongMaterial color="#38a050" flatShading />
+        </mesh>
+      ))}
+      {/* ray petals */}
+      {Array.from({length:12}).map((_,i) => {
+        const a = (i/12)*Math.PI*2;
+        return (
+          <mesh key={i} castShadow position={[Math.cos(a)*0.4, 1.58, Math.sin(a)*0.4]}>
+            <capsuleGeometry args={[0.07,0.22,3,5]} />
+            <meshPhongMaterial color="#ffcc00" flatShading shininess={30}
+              emissive={milestone?'#ffaa00':'#000'} emissiveIntensity={milestone?0.5:0} />
+          </mesh>
+        );
+      })}
+      {/* disk */}
+      <mesh castShadow position={[0,1.58,0]}>
+        <cylinderGeometry args={[0.24,0.24,0.1,10]} />
+        <meshPhongMaterial color="#5a2d0c" flatShading />
+      </mesh>
+    </group>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MOUNTAIN VARIANTS
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── Peak (🏃 — classic snowy mountain, original Mountain) ────────
+function Peak({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
   const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
     new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
   ), [pos]);
@@ -172,14 +432,136 @@ function Mountain({ pos, scale, color, milestone }: { pos:[number,number,number]
       </mesh>
       <mesh castShadow position={[0,1.28,0]}>
         <coneGeometry args={[0.1,0.22,5]} />
-        <meshPhongMaterial color={milestone ? '#a0eeff' : '#f4faff'} flatShading shininess={60} emissive={milestone ? '#60ddff' : '#000000'} emissiveIntensity={milestone ? 0.5 : 0} />
+        <meshPhongMaterial color={milestone ? '#a0eeff' : '#f4faff'} flatShading shininess={60}
+          emissive={milestone ? '#60ddff' : '#000000'} emissiveIntensity={milestone ? 0.5 : 0} />
       </mesh>
     </group>
   );
 }
 
-// ─── Building ─────────────────────────────────────────────────────────────────
-function Building({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+// ─── Volcano (💪/🥊 — power/strength) ─────────────────────────────
+function Volcano({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  const lavaRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (lavaRef.current) {
+      (lavaRef.current.material as THREE.MeshPhongMaterial).emissiveIntensity =
+        0.6 + Math.sin(clock.elapsedTime * 2.5) * 0.35;
+    }
+  });
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      <mesh castShadow position={[0,0.12,0]}>
+        <coneGeometry args={[0.9,0.2,7]} />
+        <meshPhongMaterial color={tint(color,-0.15)} flatShading />
+      </mesh>
+      <mesh castShadow position={[0,0.6,0]}>
+        <coneGeometry args={[0.72,1.0,7]} />
+        <meshPhongMaterial color={color} flatShading shininess={6} />
+      </mesh>
+      {/* crater rim */}
+      <mesh castShadow position={[0,1.12,0]}>
+        <torusGeometry args={[0.26,0.07,5,10]} />
+        <meshPhongMaterial color={tint(color,-0.1)} flatShading />
+      </mesh>
+      {/* lava glow */}
+      <mesh ref={lavaRef} castShadow position={[0,1.1,0]}>
+        <cylinderGeometry args={[0.22,0.24,0.04,10]} />
+        <meshPhongMaterial color={milestone?'#ffaa00':'#ff4400'} flatShading
+          emissive={milestone?'#ff8800':'#ff2200'} emissiveIntensity={0.6} />
+      </mesh>
+      {/* lava drips */}
+      {milestone && [-0.15,0.15].map((x,i) => (
+        <mesh key={i} castShadow position={[x,0.85+i*0.1,0.2]}>
+          <sphereGeometry args={[0.07,5,4]} />
+          <meshPhongMaterial color="#ff6600" flatShading emissive="#ff4400" emissiveIntensity={0.7} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ─── Hill (🚴/⚽ — gentle rolling hill) ────────────────────────────
+function Hill({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      {/* wide base */}
+      <mesh castShadow position={[0,0.2,0]}>
+        <sphereGeometry args={[0.82,8,5]} />
+        <meshPhongMaterial color={tint(color,-0.08)} flatShading />
+      </mesh>
+      {/* main hill */}
+      <mesh castShadow position={[0,0.52,0]}>
+        <sphereGeometry args={[0.62,8,6]} />
+        <meshPhongMaterial color={color} flatShading shininess={10} />
+      </mesh>
+      {/* top rounded cap */}
+      <mesh castShadow position={[0,0.9,0]}>
+        <sphereGeometry args={[0.32,7,5]} />
+        <meshPhongMaterial color={tint(color,0.1)} flatShading />
+      </mesh>
+      {/* little tree on top if milestone */}
+      {milestone && (
+        <mesh castShadow position={[0,1.28,0]}>
+          <coneGeometry args={[0.18,0.4,6]} />
+          <meshPhongMaterial color="#2d8a4e" flatShading emissive="#3da85f" emissiveIntensity={0.4} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+// ─── Glacier (🏊 — swimming/ice) ───────────────────────────────────
+function Glacier({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  const shimRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (shimRef.current) {
+      (shimRef.current.material as THREE.MeshPhongMaterial).opacity =
+        0.35 + Math.sin(clock.elapsedTime * 1.8) * 0.12;
+    }
+  });
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      {/* base ice shelf */}
+      <mesh castShadow position={[0,0.08,0]}>
+        <boxGeometry args={[1.1,0.16,0.8]} />
+        <meshPhongMaterial color="#a8ddf8" flatShading shininess={60} specular="#ffffff" />
+      </mesh>
+      {/* main iceberg */}
+      <mesh castShadow position={[0,0.55,0]}>
+        <octahedronGeometry args={[0.58,1]} />
+        <meshPhongMaterial color="#c8eeff" flatShading shininess={80} specular="#ffffff" />
+      </mesh>
+      {/* smaller spire */}
+      <mesh castShadow position={[0.3,0.72,0.1]}>
+        <octahedronGeometry args={[0.3,0]} />
+        <meshPhongMaterial color="#ddf4ff" flatShading shininess={80} />
+      </mesh>
+      {/* shimmer overlay */}
+      <mesh ref={shimRef} position={[0,0.55,0]}>
+        <sphereGeometry args={[0.65,10,8]} />
+        <meshPhongMaterial color="#ffffff" transparent opacity={0.35} depthWrite={false}
+          side={THREE.FrontSide} shininess={100}
+          emissive={milestone?'#88ccff':'#44aaff'} emissiveIntensity={milestone?0.5:0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BUILDING VARIANTS
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── Tower (💻/🚀 — original Building) ─────────────────────────────
+function Tower({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
   const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
     new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
   ), [pos]);
@@ -222,6 +604,146 @@ function Building({ pos, scale, color, milestone }: { pos:[number,number,number]
         <boxGeometry args={[0.38,0.62,0.01]} />
         <meshPhongMaterial color="#fffbe0" emissive="#ffdd80" emissiveIntensity={milestone ? 1.6 : 0.9} transparent opacity={0.92} />
       </mesh>
+    </group>
+  );
+}
+
+// ─── Skyscraper (🎯/📊 — tall glass tower) ─────────────────────────
+function Skyscraper({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  const tipRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (tipRef.current) {
+      (tipRef.current.material as THREE.MeshPhongMaterial).emissiveIntensity =
+        0.5 + Math.sin(clock.elapsedTime*3)*0.3;
+    }
+  });
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      {/* wide base */}
+      <mesh castShadow position={[0,0.08,0]}>
+        <boxGeometry args={[0.7,0.16,0.7]} />
+        <meshPhongMaterial color={tint(color,-0.2)} flatShading />
+      </mesh>
+      {/* mid section */}
+      <mesh castShadow position={[0,0.6,0]}>
+        <boxGeometry args={[0.56,0.96,0.56]} />
+        <meshPhongMaterial color={color} flatShading shininess={50} specular="#aaaaff" />
+      </mesh>
+      {/* upper section */}
+      <mesh castShadow position={[0,1.22,0]}>
+        <boxGeometry args={[0.4,0.56,0.4]} />
+        <meshPhongMaterial color={tint(color,0.1)} flatShading shininess={60} specular="#ccccff" />
+      </mesh>
+      {/* glass facade */}
+      <mesh position={[0,0.6,0.285]}>
+        <boxGeometry args={[0.48,0.88,0.01]} />
+        <meshPhongMaterial color="#aaddff" emissive="#88ccff" emissiveIntensity={milestone?1.4:0.7} transparent opacity={0.85} />
+      </mesh>
+      {/* spire */}
+      <mesh castShadow position={[0,1.58,0]}>
+        <coneGeometry args={[0.06,0.42,5]} />
+        <meshPhongMaterial color="#ccd8ff" flatShading />
+      </mesh>
+      <mesh ref={tipRef} position={[0,1.82,0]}>
+        <sphereGeometry args={[0.04,5,4]} />
+        <meshPhongMaterial color={milestone?'#ff44aa':'#ff8844'} emissive={milestone?'#ff22aa':'#ff6622'} emissiveIntensity={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
+// ─── Dome (🎨 — creative/art) ───────────────────────────────────────
+function Dome({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  const glowRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (glowRef.current && milestone) {
+      (glowRef.current.material as THREE.MeshPhongMaterial).opacity =
+        0.25 + Math.sin(clock.elapsedTime*1.6)*0.12;
+    }
+  });
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      {/* base cylinder */}
+      <mesh castShadow position={[0,0.2,0]}>
+        <cylinderGeometry args={[0.55,0.58,0.4,10]} />
+        <meshPhongMaterial color={tint(color,-0.15)} flatShading />
+      </mesh>
+      {/* dome */}
+      <mesh castShadow position={[0,0.56,0]}>
+        <sphereGeometry args={[0.55,10,8,0,Math.PI*2,0,Math.PI/2]} />
+        <meshPhongMaterial color={color} flatShading shininess={50} specular="#ccaaff" />
+      </mesh>
+      {/* windows ring */}
+      {Array.from({length:6}).map((_,i) => {
+        const a = (i/6)*Math.PI*2;
+        return (
+          <mesh key={i} position={[Math.cos(a)*0.56,0.22,Math.sin(a)*0.56]}>
+            <boxGeometry args={[0.1,0.2,0.02]} />
+            <meshPhongMaterial color="#fffbe0" emissive="#ffdd88"
+              emissiveIntensity={milestone?1.8:1.0} transparent opacity={0.9} />
+          </mesh>
+        );
+      })}
+      {/* golden top */}
+      <mesh castShadow position={[0,1.1,0]}>
+        <sphereGeometry args={[0.1,6,5]} />
+        <meshPhongMaterial color="#f0c040" flatShading emissive="#ffaa00" emissiveIntensity={0.5} />
+      </mesh>
+      {milestone && (
+        <mesh ref={glowRef} position={[0,0.56,0]}>
+          <sphereGeometry args={[0.7,10,8]} />
+          <meshPhongMaterial color={color} transparent opacity={0.25} depthWrite={false} side={THREE.BackSide} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+// ─── Cabin (🔧 — hands-on/maker) ────────────────────────────────────
+function Cabin({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  return (
+    <group position={pos} quaternion={q} scale={scale}>
+      {/* body */}
+      <mesh castShadow position={[0,0.36,0]}>
+        <boxGeometry args={[0.76,0.72,0.64]} />
+        <meshPhongMaterial color="#8b5e2a" flatShading />
+      </mesh>
+      {/* roof */}
+      <mesh castShadow position={[0,0.84,0]}>
+        <coneGeometry args={[0.6,0.5,4]} />
+        <meshPhongMaterial color={color} flatShading shininess={8} />
+      </mesh>
+      {/* door */}
+      <mesh position={[0,0.24,0.33]}>
+        <boxGeometry args={[0.18,0.32,0.01]} />
+        <meshPhongMaterial color="#5a2d0c" flatShading />
+      </mesh>
+      {/* window */}
+      <mesh position={[0.24,0.42,0.33]}>
+        <boxGeometry args={[0.16,0.16,0.01]} />
+        <meshPhongMaterial color="#fffbe0" emissive="#ffdd80"
+          emissiveIntensity={milestone?1.8:0.8} transparent opacity={0.9} />
+      </mesh>
+      {/* chimney */}
+      <mesh castShadow position={[0.22,1.12,0]}>
+        <boxGeometry args={[0.14,0.32,0.14]} />
+        <meshPhongMaterial color="#7a4030" flatShading />
+      </mesh>
+      {milestone && (
+        <mesh position={[0.22,1.3,0]}>
+          <sphereGeometry args={[0.08,5,4]} />
+          <meshPhongMaterial color="#ff8840" emissive="#ff5500" emissiveIntensity={1.0} />
+        </mesh>
+      )}
     </group>
   );
 }
@@ -526,14 +1048,32 @@ function FloatingPlanet({ children }: { children: React.ReactNode }) {
 // ─── Planet object dispatch ───────────────────────────────────────────────────
 function PlanetObjectMesh({ obj, isNew }: { obj: PlanetObject; isNew: boolean }) {
   const props = { pos: obj.position, scale: obj.scale, color: obj.color, milestone: obj.milestone };
-  const mesh = {
-    tree:     <Tree     {...props} />,
-    flower:   <Flower   {...props} />,
-    mountain: <Mountain {...props} />,
-    building: <Building {...props} />,
-  } as Record<HabitType, JSX.Element>;
+  const sub = obj.subType;
 
-  return <GrowIn active={isNew}>{mesh[obj.type]}</GrowIn>;
+  let mesh: JSX.Element;
+  if (obj.type === 'tree') {
+    if (sub === 'palm')    mesh = <Palm    {...props} />;
+    else if (sub === 'oak')    mesh = <Oak     {...props} />;
+    else if (sub === 'cactus') mesh = <Cactus  {...props} />;
+    else                       mesh = <Pine    {...props} />;
+  } else if (obj.type === 'flower') {
+    if (sub === 'tulip')     mesh = <Tulip    {...props} />;
+    else if (sub === 'lotus')    mesh = <Lotus    {...props} />;
+    else if (sub === 'sunflower') mesh = <Sunflower {...props} />;
+    else                         mesh = <Daisy    {...props} />;
+  } else if (obj.type === 'mountain') {
+    if (sub === 'volcano')  mesh = <Volcano  {...props} />;
+    else if (sub === 'hill')    mesh = <Hill     {...props} />;
+    else if (sub === 'glacier') mesh = <Glacier  {...props} />;
+    else                        mesh = <Peak     {...props} />;
+  } else {
+    if (sub === 'skyscraper') mesh = <Skyscraper {...props} />;
+    else if (sub === 'dome')    mesh = <Dome       {...props} />;
+    else if (sub === 'cabin')   mesh = <Cabin      {...props} />;
+    else                        mesh = <Tower      {...props} />;
+  }
+
+  return <GrowIn active={isNew}>{mesh}</GrowIn>;
 }
 
 // ─── Main exported scene ──────────────────────────────────────────────────────

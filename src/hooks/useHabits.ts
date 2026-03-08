@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Habit, HabitEntry, PlanetObject, HabitType, HABIT_TYPE_CONFIG } from '@/types/habits';
+import { Habit, HabitEntry, PlanetObject, HabitType, HABIT_TYPE_CONFIG, ICON_TO_SUBTYPE } from '@/types/habits';
 
 const HABITS_KEY = 'habitplanet_habits_v2';
 const ENTRIES_KEY = 'habitplanet_entries_v2';
@@ -97,6 +97,7 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
     const newObj: PlanetObject = {
       id: objId,
       type: habit.type,
+      subType: ICON_TO_SUBTYPE[habit.icon],
       position: pos,
       scale,
       color: randomColor(habit.type, isMilestone),
@@ -170,6 +171,7 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
         newObjects.push({
           id: uid(),
           type: habit.type,
+          subType: ICON_TO_SUBTYPE[habit.icon],
           position: pos,
           scale,
           color: randomColor(habit.type, isMilestone),

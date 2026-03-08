@@ -1,5 +1,25 @@
 export type HabitType = 'tree' | 'flower' | 'mountain' | 'building';
 
+// Sub-types per category — drives distinct 3D shapes
+export type TreeSubType     = 'pine' | 'palm' | 'oak' | 'cactus';
+export type FlowerSubType   = 'daisy' | 'tulip' | 'lotus' | 'sunflower';
+export type MountainSubType = 'peak' | 'volcano' | 'hill' | 'glacier';
+export type BuildingSubType = 'tower' | 'dome' | 'cabin' | 'skyscraper';
+export type ObjectSubType   = TreeSubType | FlowerSubType | MountainSubType | BuildingSubType;
+
+/** Map a habit icon to a deterministic sub-type */
+export const ICON_TO_SUBTYPE: Record<string, ObjectSubType> = {
+  // tree
+  '📚': 'pine', '📖': 'oak', '🎓': 'palm', '🧠': 'cactus', '✏️': 'pine', '🔬': 'oak',
+  // flower
+  '🧘': 'lotus', '🌿': 'daisy', '💆': 'tulip', '🫁': 'lotus', '💜': 'tulip', '🕯️': 'sunflower',
+  // mountain
+  '🏃': 'peak', '💪': 'volcano', '🚴': 'hill', '🏋️': 'volcano', '⚽': 'hill',
+  '🥊': 'volcano', '🏊': 'glacier',
+  // building
+  '💻': 'tower', '🎯': 'skyscraper', '🔧': 'cabin', '🎨': 'dome', '📊': 'skyscraper', '🚀': 'tower',
+};
+
 export interface Habit {
   id: string;
   name: string;
@@ -18,6 +38,7 @@ export interface HabitEntry {
 export interface PlanetObject {
   id: string;
   type: HabitType;
+  subType?: ObjectSubType;
   position: [number, number, number];
   scale: number;
   color: string;

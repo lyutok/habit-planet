@@ -794,7 +794,7 @@ function Butterfly({ pos, index }: { pos:[number,number,number]; index: number }
   });
 
   return (
-    <group ref={groupRef} scale={0.65}>
+    <group ref={groupRef} scale={0.5}>
       {/* wing flap pivot */}
       <group ref={wingRef}>
         <ButterflyWing side={1}  col={col} spotCol={spotCol} />

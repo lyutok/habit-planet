@@ -24,8 +24,10 @@ export function HabitPanel({
   onAddHabit,
   nextMilestone,
   longestStreak,
+  onClearAll,
 }: HabitPanelProps) {
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const handleComplete = (id: string) => {
     if (isCompletedToday(id)) return;

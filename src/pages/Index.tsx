@@ -7,7 +7,7 @@ import { AddHabitModal } from '@/components/AddHabitModal';
 import { useHabits } from '@/hooks/useHabits';
 import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
+import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
 
 function LoadingPlanet() {

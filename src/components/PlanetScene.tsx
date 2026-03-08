@@ -227,37 +227,203 @@ function Building({ pos, scale, color, milestone }: { pos:[number,number,number]
 }
 
 // ─── Butterfly (milestone creature at 30-day streak) ─────────────────────────
-function Butterfly({ pos }: { pos:[number,number,number] }) {
+function Butterfly({ pos, index }: { pos:[number,number,number]; index: number }) {
   const groupRef = useRef<THREE.Group>(null);
   const wingRef  = useRef<THREE.Group>(null);
+  const colors = ['#ff88cc','#88ccff','#ffcc44','#aaffaa','#cc88ff'];
+  const col = colors[index % colors.length];
 
   useFrame(({ clock }) => {
     if (!groupRef.current || !wingRef.current) return;
     const t = clock.elapsedTime;
-    // orbit around the planet
-    const angle = t * 0.4 + pos[0] * 5;
-    const r = 2.0;
-    groupRef.current.position.set(Math.cos(angle)*r, pos[1]*0.5 + Math.sin(t*0.3)*0.3, Math.sin(angle)*r);
+    const angle = t * 0.38 + (index / 5) * Math.PI * 2;
+    const r = 2.05 + Math.sin(t * 0.7 + index) * 0.12;
+    const yBob = Math.sin(t * 0.9 + index * 1.3) * 0.28;
+    groupRef.current.position.set(Math.cos(angle)*r, yBob, Math.sin(angle)*r);
     groupRef.current.rotation.y = angle + Math.PI/2;
-    // wing flap
-    wingRef.current.rotation.z = Math.sin(t * 8) * 0.5;
+    wingRef.current.rotation.z = Math.sin(t * 9 + index) * 0.55;
   });
 
   return (
     <group ref={groupRef}>
       <group ref={wingRef}>
-        <mesh position={[0.18,0,0]}>
-          <planeGeometry args={[0.3,0.22]} />
-          <meshPhongMaterial color="#ff88cc" transparent opacity={0.8} side={THREE.DoubleSide} />
+        {/* upper wings */}
+        <mesh position={[0.2, 0.06, 0]} rotation={[0, 0, 0.25]}>
+          <planeGeometry args={[0.32, 0.26]} />
+          <meshPhongMaterial color={col} transparent opacity={0.88} side={THREE.DoubleSide} shininess={60} emissive={col} emissiveIntensity={0.25} />
         </mesh>
-        <mesh position={[-0.18,0,0]}>
-          <planeGeometry args={[0.3,0.22]} />
-          <meshPhongMaterial color="#ff88cc" transparent opacity={0.8} side={THREE.DoubleSide} />
+        <mesh position={[-0.2, 0.06, 0]} rotation={[0, 0, -0.25]}>
+          <planeGeometry args={[0.32, 0.26]} />
+          <meshPhongMaterial color={col} transparent opacity={0.88} side={THREE.DoubleSide} shininess={60} emissive={col} emissiveIntensity={0.25} />
+        </mesh>
+        {/* lower wings */}
+        <mesh position={[0.16, -0.1, 0]} rotation={[0, 0, 0.5]}>
+          <planeGeometry args={[0.2, 0.16]} />
+          <meshPhongMaterial color={col} transparent opacity={0.7} side={THREE.DoubleSide} />
+        </mesh>
+        <mesh position={[-0.16, -0.1, 0]} rotation={[0, 0, -0.5]}>
+          <planeGeometry args={[0.2, 0.16]} />
+          <meshPhongMaterial color={col} transparent opacity={0.7} side={THREE.DoubleSide} />
         </mesh>
       </group>
-      <mesh position={[0,0,0]}>
-        <capsuleGeometry args={[0.02,0.12,3,6]} />
-        <meshPhongMaterial color="#884400" flatShading />
+      {/* body */}
+      <mesh>
+        <capsuleGeometry args={[0.025, 0.16, 4, 6]} />
+        <meshPhongMaterial color="#442200" flatShading />
+      </mesh>
+      {/* antennae */}
+      <mesh position={[0.04, 0.14, 0]} rotation={[0, 0, 0.4]}>
+        <capsuleGeometry args={[0.008, 0.1, 3, 4]} />
+        <meshPhongMaterial color="#663300" flatShading />
+      </mesh>
+      <mesh position={[-0.04, 0.14, 0]} rotation={[0, 0, -0.4]}>
+        <capsuleGeometry args={[0.008, 0.1, 3, 4]} />
+        <meshPhongMaterial color="#663300" flatShading />
+      </mesh>
+    </group>
+  );
+}
+
+// ─── Animal (deer / critter at 30-day milestone) ──────────────────────────────
+function Animal({ pos, index }: { pos:[number,number,number]; index: number }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    // gentle idle bob
+    groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.4 + index * 2.1) * 0.6;
+  });
+
+  const bodyColor = ['#d4a467','#b8856a','#c49a6c','#e8c49a'][index % 4];
+
+  return (
+    <group position={pos} quaternion={q} scale={0.32}>
+      <group ref={groupRef}>
+        {/* body */}
+        <mesh castShadow position={[0, 0.38, 0]}>
+          <capsuleGeometry args={[0.18, 0.38, 4, 8]} />
+          <meshPhongMaterial color={bodyColor} flatShading />
+        </mesh>
+        {/* neck */}
+        <mesh castShadow position={[0.08, 0.72, 0]} rotation={[0, 0, 0.3]}>
+          <capsuleGeometry args={[0.1, 0.22, 4, 6]} />
+          <meshPhongMaterial color={bodyColor} flatShading />
+        </mesh>
+        {/* head */}
+        <mesh castShadow position={[0.2, 0.92, 0]}>
+          <sphereGeometry args={[0.16, 6, 5]} />
+          <meshPhongMaterial color={bodyColor} flatShading />
+        </mesh>
+        {/* snout */}
+        <mesh castShadow position={[0.34, 0.88, 0]}>
+          <sphereGeometry args={[0.09, 5, 4]} />
+          <meshPhongMaterial color="#e8b090" flatShading />
+        </mesh>
+        {/* eyes */}
+        <mesh position={[0.3, 0.96, 0.09]}>
+          <sphereGeometry args={[0.03, 4, 4]} />
+          <meshPhongMaterial color="#111111" />
+        </mesh>
+        <mesh position={[0.3, 0.96, -0.09]}>
+          <sphereGeometry args={[0.03, 4, 4]} />
+          <meshPhongMaterial color="#111111" />
+        </mesh>
+        {/* ears */}
+        <mesh position={[0.15, 1.1, 0.1]} rotation={[0.2, 0, -0.5]}>
+          <coneGeometry args={[0.05, 0.14, 4]} />
+          <meshPhongMaterial color={bodyColor} flatShading />
+        </mesh>
+        <mesh position={[0.15, 1.1, -0.1]} rotation={[-0.2, 0, -0.5]}>
+          <coneGeometry args={[0.05, 0.14, 4]} />
+          <meshPhongMaterial color={bodyColor} flatShading />
+        </mesh>
+        {/* antlers (only for every other) */}
+        {index % 2 === 0 && (
+          <>
+            <mesh position={[0.12, 1.22, 0.07]} rotation={[0.4, 0, -0.3]}>
+              <cylinderGeometry args={[0.015, 0.02, 0.22, 4]} />
+              <meshPhongMaterial color="#8b6340" flatShading />
+            </mesh>
+            <mesh position={[0.12, 1.22, -0.07]} rotation={[-0.4, 0, -0.3]}>
+              <cylinderGeometry args={[0.015, 0.02, 0.22, 4]} />
+              <meshPhongMaterial color="#8b6340" flatShading />
+            </mesh>
+          </>
+        )}
+        {/* legs */}
+        {[[-0.12,0,-0.1],[-0.12,0,0.1],[0.12,0,-0.1],[0.12,0,0.1]].map(([x,_,z],i) => (
+          <mesh key={i} castShadow position={[x, 0.1, z]}>
+            <capsuleGeometry args={[0.04, 0.24, 3, 5]} />
+            <meshPhongMaterial color={bodyColor} flatShading />
+          </mesh>
+        ))}
+        {/* tail */}
+        <mesh position={[-0.2, 0.44, 0]}>
+          <sphereGeometry args={[0.06, 5, 4]} />
+          <meshPhongMaterial color="#f5f0e8" flatShading />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+// ─── GlowingPlant (100-day milestone) ────────────────────────────────────────
+function GlowingPlant({ pos, index }: { pos:[number,number,number]; index: number }) {
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0), new THREE.Vector3(...pos).normalize()
+  ), [pos]);
+  const petalRef = useRef<THREE.Group>(null);
+  const glowRef  = useRef<THREE.Mesh>(null);
+
+  const hues = ['#a0f0a0','#80ffcc','#c0ff80','#a8ffdd','#d0ffb0'];
+  const col  = hues[index % hues.length];
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime + index * 1.7;
+    if (petalRef.current) petalRef.current.rotation.y = t * 0.8;
+    if (glowRef.current) {
+      const mat = glowRef.current.material as THREE.MeshPhongMaterial;
+      mat.opacity = 0.18 + Math.sin(t * 2.2) * 0.1;
+      mat.emissiveIntensity = 0.4 + Math.sin(t * 2.2) * 0.2;
+    }
+  });
+
+  return (
+    <group position={pos} quaternion={q} scale={0.28}>
+      {/* stem */}
+      <mesh castShadow position={[0, 0.3, 0]}>
+        <cylinderGeometry args={[0.045, 0.06, 0.6, 5]} />
+        <meshPhongMaterial color="#2db830" flatShading emissive="#50ee60" emissiveIntensity={0.3} />
+      </mesh>
+      {/* petals */}
+      <group ref={petalRef} position={[0, 0.72, 0]}>
+        {Array.from({ length: 6 }).map((_, i) => {
+          const a = (i / 6) * Math.PI * 2;
+          return (
+            <mesh key={i} castShadow position={[Math.cos(a)*0.28, 0, Math.sin(a)*0.28]}>
+              <sphereGeometry args={[0.14, 6, 5]} />
+              <meshPhongMaterial color={col} flatShading emissive={col} emissiveIntensity={0.5} shininess={40} />
+            </mesh>
+          );
+        })}
+        {/* centre */}
+        <mesh castShadow>
+          <sphereGeometry args={[0.2, 7, 6]} />
+          <meshPhongMaterial color="#ffffaa" flatShading emissive="#ffff44" emissiveIntensity={0.8} shininess={60} />
+        </mesh>
+      </group>
+      {/* outer glow sphere */}
+      <mesh ref={glowRef} position={[0, 0.72, 0]}>
+        <sphereGeometry args={[0.6, 12, 8]} />
+        <meshPhongMaterial color={col} transparent opacity={0.22} depthWrite={false} side={THREE.BackSide} emissive={col} emissiveIntensity={0.4} />
+      </mesh>
+      {/* ground ring glow */}
+      <mesh position={[0, 0.02, 0]} rotation={[Math.PI/2, 0, 0]}>
+        <ringGeometry args={[0.14, 0.48, 12]} />
+        <meshPhongMaterial color={col} transparent opacity={0.25} depthWrite={false} side={THREE.DoubleSide} emissive={col} emissiveIntensity={0.6} />
       </mesh>
     </group>
   );

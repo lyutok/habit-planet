@@ -127,16 +127,16 @@
     animation: float 4s ease-in-out infinite;
   }
 
-  .stars-bg {
-    background-image:
-      radial-gradient(circle at 20% 30%, hsl(var(--star-glow) / 0.08) 1px, transparent 1px),
-      radial-gradient(circle at 70% 15%, hsl(var(--star-glow) / 0.06) 1px, transparent 1px),
-      radial-gradient(circle at 45% 80%, hsl(var(--star-glow) / 0.05) 1px, transparent 1px),
-      radial-gradient(circle at 85% 60%, hsl(var(--star-glow) / 0.07) 1px, transparent 1px),
-      radial-gradient(circle at 10% 70%, hsl(var(--star-glow) / 0.06) 1px, transparent 1px);
-    background-size: 400px 400px, 350px 350px, 500px 500px, 300px 300px, 450px 450px;
+  /* Stat pill in header */
+  .stat-chip {
+    @apply flex items-center gap-2 rounded-xl border border-border/50 bg-card/60 px-3 py-2 backdrop-blur-sm;
   }
 
+  .stat-label {
+    @apply text-[10px] text-muted-foreground leading-none mt-0.5;
+  }
+
+  /* Habit card */
   .habit-card {
     background: var(--gradient-card);
     border: 1px solid hsl(var(--border));
@@ -152,6 +152,18 @@
 
   .completed-pulse {
     animation: completed-pulse 0.6s ease-out;
+  }
+
+  /* Thin custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 99px;
   }
 }
 

@@ -14,8 +14,8 @@ export const ICON_TO_SUBTYPE: Record<string, ObjectSubType> = {
   // flower
   '🧘': 'lotus', '🌿': 'daisy', '💆': 'tulip', '🫁': 'lotus', '💜': 'tulip', '🕯️': 'sunflower',
   // mountain
-  '🏃': 'peak', '💪': 'volcano', '🚴': 'hill', '🏋️': 'volcano', '⚽': 'hill',
-  '🥊': 'volcano', '🏊': 'glacier',
+  '🏃': 'peak', '💪': 'peak', '🚴': 'hill', '🏋️': 'peak', '⚽': 'hill',
+  '🥊': 'peak', '🏊': 'glacier',
   // building
   '💻': 'tower', '🎯': 'skyscraper', '🔧': 'cabin', '🎨': 'dome', '📊': 'skyscraper', '🚀': 'tower',
 };

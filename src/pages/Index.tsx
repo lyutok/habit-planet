@@ -7,7 +7,8 @@ import { AddHabitModal } from '@/components/AddHabitModal';
 import { useHabits } from '@/hooks/useHabits';
 import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, LogOut } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
 
 function LoadingPlanet() {
@@ -23,6 +24,7 @@ function LoadingPlanet() {
 
 const Index = () => {
   const { dayOffset, advanceDay, resetOffset, getToday, jumpDays } = useDevDate();
+  const { signOut, user } = useAuth();
   const [showDevPanel, setShowDevPanel] = useState(false);
   const isMobile = useIsMobile();
   const isDev = import.meta.env.DEV;
@@ -162,6 +164,16 @@ const Index = () => {
             )
           )}
         </div>
+
+        {/* Sign out */}
+        <button
+          onClick={signOut}
+          className="hidden sm:flex items-center gap-1.5 rounded-lg border border-border/40 bg-card/60 px-2.5 py-1.5 text-[11px] font-bold text-muted-foreground transition-all hover:bg-muted/40 active:scale-95 ml-1"
+          title={`Sign out (${user?.email})`}
+        >
+          <LogOut size={11} />
+          <span>Sign out</span>
+        </button>
       </header>
 
       {/* Main Content */}

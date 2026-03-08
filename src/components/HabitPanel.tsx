@@ -162,6 +162,34 @@ export function HabitPanel({
         <Plus size={15} className="mr-1.5" />
         Add Habit
       </Button>
+
+      {/* Clear All — shown in mobile drawer */}
+      {onClearAll && habits.length > 0 && (
+        confirmClear ? (
+          <div className="flex gap-2">
+            <button
+              onClick={() => { onClearAll(); setConfirmClear(false); }}
+              className="flex-1 rounded-xl bg-destructive py-2 text-xs font-black text-destructive-foreground transition-all active:scale-95 hover:bg-destructive/90"
+            >
+              Confirm Clear All
+            </button>
+            <button
+              onClick={() => setConfirmClear(false)}
+              className="flex-1 rounded-xl border border-border/60 bg-card/60 py-2 text-xs font-bold text-muted-foreground transition-all active:scale-95 hover:bg-muted/40"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmClear(true)}
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/10 py-2 text-xs font-bold text-destructive transition-all hover:bg-destructive/20 active:scale-95"
+          >
+            <Trash2 size={12} />
+            Clear All Data
+          </button>
+        )
+      )}
     </div>
   );
 }

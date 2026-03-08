@@ -65,6 +65,88 @@ function Planet() {
   );
 }
 
+// ─── Cloud puff (3–5 overlapping spheres) ────────────────────────────────────
+function CloudPuff({ position, scale }: { position: [number, number, number]; scale: number }) {
+  const blobs = useMemo(() => [
+    { p: [0,      0,     0   ], r: 0.22 },
+    { p: [0.28,   0.04,  0   ], r: 0.18 },
+    { p: [-0.24,  0.02,  0.06], r: 0.17 },
+    { p: [0.10,   0.12,  0.10], r: 0.16 },
+    { p: [-0.08,  0.14, -0.08], r: 0.14 },
+  ], []);
+
+  return (
+    <group position={position} scale={scale}>
+      {blobs.map((b, i) => (
+        <mesh key={i} position={b.p as [number,number,number]}>
+          <sphereGeometry args={[b.r, 7, 5]} />
+          <meshPhongMaterial
+            color="#e8f4ff"
+            transparent
+            opacity={0.82}
+            depthWrite={false}
+            shininess={0}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ─── Orbiting cloud clusters ──────────────────────────────────────────────────
+function OrbitingClouds() {
+  // Define each cloud band: orbit radius, inclination, start angle, speed, scale
+  const clouds = useMemo(() => [
+    // Band A — equatorial, 5 clouds
+    { orbitR: 1.74, incline: 0.18,  startAngle: 0.0,  speed: 0.14, scale: 0.30 },
+    { orbitR: 1.76, incline: 0.10,  startAngle: 1.26, speed: 0.12, scale: 0.22 },
+    { orbitR: 1.72, incline: -0.12, startAngle: 2.52, speed: 0.16, scale: 0.26 },
+    { orbitR: 1.75, incline: 0.22,  startAngle: 3.78, speed: 0.11, scale: 0.28 },
+    { orbitR: 1.73, incline: -0.08, startAngle: 5.03, speed: 0.15, scale: 0.24 },
+    // Band B — mid-latitude, 4 clouds
+    { orbitR: 1.76, incline: 0.68,  startAngle: 0.4,  speed: 0.10, scale: 0.20 },
+    { orbitR: 1.74, incline: 0.72,  startAngle: 1.97, speed: 0.13, scale: 0.18 },
+    { orbitR: 1.75, incline: -0.65, startAngle: 3.54, speed: 0.09, scale: 0.21 },
+    { orbitR: 1.73, incline: -0.70, startAngle: 5.11, speed: 0.12, scale: 0.19 },
+    // Band C — polar, 3 clouds
+    { orbitR: 1.74, incline: 1.30,  startAngle: 0.8,  speed: 0.08, scale: 0.17 },
+    { orbitR: 1.76, incline: 1.35,  startAngle: 2.89, speed: 0.10, scale: 0.16 },
+    { orbitR: 1.73, incline: -1.28, startAngle: 4.97, speed: 0.09, scale: 0.18 },
+  ], []);
+
+  const refs = useRef<THREE.Group[]>([]);
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    refs.current.forEach((g, i) => {
+      if (!g) return;
+      const c = clouds[i];
+      const angle = c.startAngle + t * c.speed;
+      // Rotate orbit plane by inclination around X axis
+      const x = c.orbitR * Math.cos(angle);
+      const yRaw = c.orbitR * Math.sin(angle);
+      g.position.set(
+        x,
+        yRaw * Math.cos(c.incline),
+        yRaw * Math.sin(c.incline)
+      );
+      // Always face outward (billboard-ish tilt)
+      g.lookAt(0, 0, 0);
+      g.rotateX(Math.PI / 2);
+    });
+  });
+
+  return (
+    <group>
+      {clouds.map((c, i) => (
+        <group key={i} ref={el => { if (el) refs.current[i] = el; }}>
+          <CloudPuff position={[0, 0, 0]} scale={c.scale} />
+        </group>
+      ))}
+    </group>
+  );
+}
+
 // ─── Tree ─────────────────────────────────────────────────────────────────────
 function Tree({ pos, scale, color, milestone }: { pos:[number,number,number]; scale:number; color:string; milestone?:boolean }) {
   const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
@@ -440,6 +522,7 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
 
       <FloatingPlanet>
         <Planet />
+        <OrbitingClouds />
         {planetObjects.map(obj => (
           <PlanetObjectMesh key={obj.id} obj={obj} isNew={obj.id === newObjectId} />
         ))}

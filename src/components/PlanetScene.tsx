@@ -2,7 +2,7 @@ import { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars, Environment } from '@react-three/drei';
 import * as THREE from 'three';
-import { PlanetObject, HabitType } from '@/types/habits';
+import { PlanetObject } from '@/types/habits';
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 function tint(hex: string, d: number): string {

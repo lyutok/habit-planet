@@ -544,6 +544,29 @@ interface PlanetSceneProps {
   longestStreak: number;
 }
 
+// Fixed positions for milestone creatures/plants so they don't re-randomize
+const BUTTERFLY_POSITIONS: [number,number,number][] = [
+  [1.8,  0.3,  0.6],
+  [-1.4, 0.1,  1.6],
+  [0.6, -0.4, -1.9],
+  [-1.9, 0.5, -0.4],
+  [1.2,  0.8, -1.5],
+];
+const ANIMAL_POSITIONS: [number,number,number][] = [
+  [ 0.6,  1.4,  0.7],
+  [-0.8,  1.1, -0.9],
+  [ 1.3, -0.7,  0.6],
+  [-0.5, -1.3, -0.8],
+];
+const GLOW_PLANT_POSITIONS: [number,number,number][] = [
+  [ 0.9,  1.2,  0.5],
+  [-1.1,  0.8,  0.9],
+  [ 0.4, -1.4,  0.7],
+  [-0.7,  0.6, -1.4],
+  [ 1.4,  0.4, -0.8],
+  [-0.3, -1.0,  1.1],
+];
+
 export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStreak }: PlanetSceneProps) {
   const [sparkleKey, setSparkleKey] = useState(0);
 
@@ -551,19 +574,14 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
     if (sparklePos) setSparkleKey(k => k+1);
   }, [sparklePos]);
 
-  // determine if butterfly milestone reached (30-day streak)
-  const hasButterflyMilestone = longestStreak >= 30;
-  const butterflies = useMemo(() => {
-    if (!hasButterflyMilestone) return [];
-    return Array.from({ length: 3 }, (_, i) => ({
-      id: i,
-      pos: [
-        Math.cos((i/3)*Math.PI*2)*1.6,
-        (Math.random()-0.5)*0.8,
-        Math.sin((i/3)*Math.PI*2)*1.6,
-      ] as [number,number,number],
-    }));
-  }, [hasButterflyMilestone]);
+  const hasAnimalMilestone    = longestStreak >= 30;
+  const hasGlowPlantMilestone = longestStreak >= 100;
+  const hasButterflies        = longestStreak >= 30;
+
+  // How many butterflies/animals/plants to show scales with streak
+  const butterflyCount = hasButterflies     ? Math.min(5, 1 + Math.floor((longestStreak - 30) / 20)) : 0;
+  const animalCount    = hasAnimalMilestone ? Math.min(4, 1 + Math.floor((longestStreak - 30) / 25)) : 0;
+  const glowCount      = hasGlowPlantMilestone ? Math.min(6, 1 + Math.floor((longestStreak - 100) / 15)) : 0;
 
   return (
     <>
@@ -581,6 +599,10 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
       <directionalLight position={[-6,-3,-7]} intensity={0.3} color="#1833a0" />
       <directionalLight position={[0,0,-9]}   intensity={0.5} color="#5599ff" />
       <pointLight       position={[0,-5,2]}   intensity={0.5} color="#30ee80" distance={12} />
+      {/* Extra glow at 100-day */}
+      {hasGlowPlantMilestone && (
+        <pointLight position={[0,0,0]} intensity={0.8} color="#80ff80" distance={5} />
+      )}
 
       {/* Deep space stars */}
       <Stars radius={90} depth={60} count={4000} factor={4} saturation={0.8} fade speed={0.8} />
@@ -591,8 +613,10 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
       {/* Camera pulse */}
       <CameraZoomPulse active={!!newObjectId} />
 
-      {/* Butterflies */}
-      {butterflies.map(b => <Butterfly key={b.id} pos={b.pos} />)}
+      {/* 30-day milestone: Butterflies orbit the planet */}
+      {Array.from({ length: butterflyCount }, (_, i) => (
+        <Butterfly key={i} pos={BUTTERFLY_POSITIONS[i]} index={i} />
+      ))}
 
       <OrbitControls
         enablePan={false}
@@ -606,8 +630,20 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
 
       <FloatingPlanet>
         <Planet />
+
+        {/* Habit-spawned objects */}
         {planetObjects.map(obj => (
           <PlanetObjectMesh key={obj.id} obj={obj} isNew={obj.id === newObjectId} />
+        ))}
+
+        {/* 30-day milestone: Animals on the surface */}
+        {Array.from({ length: animalCount }, (_, i) => (
+          <Animal key={i} pos={ANIMAL_POSITIONS[i]} index={i} />
+        ))}
+
+        {/* 100-day milestone: Glowing plants */}
+        {Array.from({ length: glowCount }, (_, i) => (
+          <GlowingPlant key={i} pos={GLOW_PLANT_POSITIONS[i]} index={i} />
         ))}
       </FloatingPlanet>
     </>

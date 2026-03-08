@@ -37,6 +37,7 @@ const Index = () => {
     getLongestStreak,
     getCurrentStreak,
     getTodayCount,
+    simulateStreak,
   } = useHabits({ getToday });
 
   const [showModal, setShowModal] = useState(false);

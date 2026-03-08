@@ -164,6 +164,16 @@ const Index = () => {
             )
           )}
         </div>
+
+        {/* Sign out */}
+        <button
+          onClick={signOut}
+          className="hidden sm:flex items-center gap-1.5 rounded-lg border border-border/40 bg-card/60 px-2.5 py-1.5 text-[11px] font-bold text-muted-foreground transition-all hover:bg-muted/40 active:scale-95 ml-1"
+          title={`Sign out (${user?.email})`}
+        >
+          <LogOut size={11} />
+          <span>Sign out</span>
+        </button>
       </header>
 
       {/* Main Content */}

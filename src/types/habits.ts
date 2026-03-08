@@ -18,10 +18,11 @@ export interface HabitEntry {
 export interface PlanetObject {
   id: string;
   type: HabitType;
-  position: [number, number, number]; // x, y, z on planet surface
+  position: [number, number, number];
   scale: number;
   color: string;
   rotation: number;
+  milestone?: boolean; // grown from a milestone streak
 }
 
 export const HABIT_TYPE_CONFIG: Record<HabitType, {
@@ -29,29 +30,47 @@ export const HABIT_TYPE_CONFIG: Record<HabitType, {
   icon: string;
   description: string;
   colors: string[];
+  milestoneColor: string;
 }> = {
   tree: {
     label: 'Tree',
     icon: '🌳',
     description: 'Reading, Learning',
-    colors: ['#2d8a4e', '#3da85f', '#4cc971', '#2a7a45'],
+    colors: ['#2d8a4e', '#3da85f', '#4cc971', '#2a7a45', '#35a05a'],
+    milestoneColor: '#a8ff78',
   },
   flower: {
     label: 'Flower',
     icon: '🌸',
     description: 'Meditation, Self-care',
-    colors: ['#e879a0', '#f59bb6', '#c94f8a', '#f472b6'],
+    colors: ['#e879a0', '#f59bb6', '#c94f8a', '#f472b6', '#ec4899'],
+    milestoneColor: '#ff9ef5',
   },
   mountain: {
     label: 'Mountain',
     icon: '⛰️',
     description: 'Exercise, Fitness',
-    colors: ['#7895b4', '#8fafc8', '#9bbad4', '#6a84a2'],
+    colors: ['#7895b4', '#8fafc8', '#9bbad4', '#6a84a2', '#8ba5bf'],
+    milestoneColor: '#c0e0ff',
   },
   building: {
     label: 'Building',
     icon: '🏙️',
     description: 'Coding, Work',
-    colors: ['#5b8def', '#4c7de6', '#7aa3f5', '#3d6ed8'],
+    colors: ['#5b8def', '#4c7de6', '#7aa3f5', '#3d6ed8', '#60a5fa'],
+    milestoneColor: '#c8b8ff',
   },
 };
+
+export interface Milestone {
+  streak: number;
+  label: string;
+  emoji: string;
+  description: string;
+}
+
+export const MILESTONES: Milestone[] = [
+  { streak: 7,   label: 'Week Warrior',   emoji: '🌿', description: 'Bigger trees appear' },
+  { streak: 30,  label: 'Month Master',   emoji: '🦋', description: 'Butterflies appear' },
+  { streak: 100, label: 'Legend',          emoji: '✨', description: 'Glowing plants bloom' },
+];

@@ -171,6 +171,7 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
         newObjects.push({
           id: uid(),
           type: habit.type,
+          subType: ICON_TO_SUBTYPE[habit.icon],
           position: pos,
           scale,
           color: randomColor(habit.type, isMilestone),

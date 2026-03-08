@@ -522,6 +522,7 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
 
       <FloatingPlanet>
         <Planet />
+        <OrbitingClouds />
         {planetObjects.map(obj => (
           <PlanetObjectMesh key={obj.id} obj={obj} isNew={obj.id === newObjectId} />
         ))}

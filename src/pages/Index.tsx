@@ -21,7 +21,7 @@ function LoadingPlanet() {
 }
 
 const Index = () => {
-  const { dayOffset, advanceDay, resetOffset, getToday } = useDevDate();
+  const { dayOffset, advanceDay, resetOffset, getToday, jumpDays } = useDevDate();
   const [showDevPanel, setShowDevPanel] = useState(false);
 
   const {
@@ -37,6 +37,7 @@ const Index = () => {
     getLongestStreak,
     getCurrentStreak,
     getTodayCount,
+    simulateStreak,
   } = useHabits({ getToday });
 
   const [showModal, setShowModal] = useState(false);
@@ -248,13 +249,36 @@ const Index = () => {
           </div>
           <button
             onClick={advanceDay}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/20 hover:bg-primary/35 text-primary text-xs font-bold py-2 transition-all active:scale-95 mb-2"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/20 hover:bg-primary/35 text-primary text-xs font-bold py-2 transition-all active:scale-95 mb-3"
           >
             <ChevronRight size={13} /> Advance 1 Day
           </button>
+
+          {/* Streak simulation shortcuts */}
+          <div className="mb-1">
+            <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-1.5">Simulate streak</p>
+            <div className="flex flex-col gap-1.5">
+              {([
+                { days: 7,   label: '🌿 7 days',   hint: 'Bigger trees' },
+                { days: 30,  label: '🦋 30 days',  hint: 'Animals appear' },
+                { days: 100, label: '✨ 100 days', hint: 'Glow plants' },
+              ] as const).map(({ days, label, hint }) => (
+                <button
+                  key={days}
+                  onClick={() => { simulateStreak(days); jumpDays(days); }}
+                  disabled={habits.length === 0}
+                  className="flex w-full items-center justify-between rounded-xl bg-accent/20 hover:bg-accent/35 text-accent-foreground text-xs font-bold px-3 py-1.5 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <span>{label}</span>
+                  <span className="text-[10px] text-muted-foreground font-normal">{hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
             onClick={resetOffset}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground text-xs font-bold py-2 transition-all active:scale-95"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground text-xs font-bold py-2 transition-all active:scale-95 mt-1"
           >
             <RotateCcw size={12} /> Reset to Today
           </button>

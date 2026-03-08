@@ -5,7 +5,8 @@ import { PlanetScene } from '@/components/PlanetScene';
 import { HabitPanel } from '@/components/HabitPanel';
 import { AddHabitModal } from '@/components/AddHabitModal';
 import { useHabits } from '@/hooks/useHabits';
-import { Flame, Globe, Sparkles } from 'lucide-react';
+import { Flame, Globe, Sparkles, Trophy } from 'lucide-react';
+import { MILESTONES } from '@/types/habits';
 
 function LoadingPlanet() {
   return (
@@ -23,85 +24,104 @@ const Index = () => {
     habits,
     planetObjects,
     newObjectId,
+    sparklePos,
     addHabit,
     deleteHabit,
     completeHabit,
     isCompletedToday,
     getTotalCompletions,
     getLongestStreak,
+    getTodayCount,
   } = useHabits();
 
   const [showModal, setShowModal] = useState(false);
 
   const totalCompletions = getTotalCompletions();
-  const longestStreak = getLongestStreak();
-  const todayCompleted = habits.filter(h => isCompletedToday(h.id)).length;
+  const longestStreak    = getLongestStreak();
+  const todayCompleted   = getTodayCount();
+
+  // Next milestone
+  const nextMilestone = MILESTONES.find(m => longestStreak < m.streak);
+  const prevMilestone = [...MILESTONES].reverse().find(m => longestStreak >= m.streak);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background stars-bg">
+    <div className="flex h-screen flex-col overflow-hidden">
       {/* Top Bar */}
-      <header className="flex shrink-0 items-center justify-between border-b border-border/50 bg-card/40 px-6 py-3 backdrop-blur-md">
+      <header className="flex shrink-0 items-center justify-between border-b border-border/40 bg-card/30 px-5 py-3 backdrop-blur-xl">
         {/* Logo */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/30">
             <Globe size={18} className="text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-black leading-none tracking-tight text-gradient-primary">
+            <h1 className="text-lg font-black leading-none tracking-tight text-gradient-primary font-display">
               Habit Planet
             </h1>
-            <p className="text-xs text-muted-foreground leading-none mt-0.5">Grow your world</p>
+            <p className="text-[11px] text-muted-foreground leading-none mt-0.5">Grow your world, one habit at a time</p>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-3">
+        {/* Stats row */}
+        <div className="flex items-center gap-2">
           {/* Today */}
-          <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-card/60 px-3 py-2 backdrop-blur-sm">
-            <Sparkles size={14} className="text-primary" />
+          <div className="stat-chip">
+            <Sparkles size={13} className="text-primary" />
             <div className="text-center">
               <div className="text-sm font-black text-gradient-primary leading-none">{todayCompleted}/{habits.length}</div>
-              <div className="text-[10px] text-muted-foreground leading-none mt-0.5">Today</div>
+              <div className="stat-label">Today</div>
             </div>
           </div>
 
-          {/* Streak */}
-          <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-card/60 px-3 py-2 backdrop-blur-sm">
-            <Flame size={14} style={{ color: 'hsl(40 95% 60%)' }} />
+          {/* Best Streak */}
+          <div className="stat-chip">
+            <Flame size={13} className="text-streak-gold" />
             <div className="text-center">
               <div className="text-sm font-black text-gradient-gold leading-none">{longestStreak}</div>
-              <div className="text-[10px] text-muted-foreground leading-none mt-0.5">Best streak</div>
+              <div className="stat-label">Best streak</div>
             </div>
           </div>
 
           {/* Total */}
-          <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-card/60 px-3 py-2 backdrop-blur-sm">
+          <div className="stat-chip">
             <span className="text-sm">🌟</span>
             <div className="text-center">
               <div className="text-sm font-black text-foreground leading-none">{totalCompletions}</div>
-              <div className="text-[10px] text-muted-foreground leading-none mt-0.5">Total</div>
+              <div className="stat-label">Total</div>
             </div>
           </div>
+
+          {/* Active milestone badge */}
+          {prevMilestone && (
+            <div className="stat-chip border-yellow-500/30 bg-yellow-500/10">
+              <Trophy size={13} className="text-yellow-400" />
+              <div className="text-center">
+                <div className="text-xs font-black text-yellow-300 leading-none">{prevMilestone.emoji} {prevMilestone.label}</div>
+                <div className="stat-label">{prevMilestone.description}</div>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel — Habits */}
-        <aside className="flex w-72 shrink-0 flex-col border-r border-border/50 bg-card/30 p-4 backdrop-blur-md">
+        {/* Left Panel */}
+        <aside className="flex w-72 shrink-0 flex-col border-r border-border/40 bg-card/20 p-4 backdrop-blur-xl">
           <HabitPanel
             habits={habits}
             isCompletedToday={isCompletedToday}
             onComplete={completeHabit}
             onDelete={deleteHabit}
             onAddHabit={() => setShowModal(true)}
+            nextMilestone={nextMilestone}
+            longestStreak={longestStreak}
           />
         </aside>
 
-        {/* Planet Canvas */}
+        {/* 3D Canvas */}
         <main className="relative flex-1">
-          {/* Hint text */}
-          <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border/40 bg-card/60 px-3 py-1.5 backdrop-blur-sm">
+          {/* Bottom hint */}
+          <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border/40 bg-card/60 px-3 py-1.5 backdrop-blur-sm pointer-events-none">
             <p className="text-xs text-muted-foreground">
               🖱️ Drag to rotate · Scroll to zoom
             </p>
@@ -109,26 +129,43 @@ const Index = () => {
 
           {/* Object counter */}
           {planetObjects.length > 0 && (
-            <div className="absolute right-4 top-4 z-10 rounded-xl border border-border/40 bg-card/70 px-3 py-2 backdrop-blur-sm">
-              <div className="text-center">
-                <div className="text-lg font-black text-gradient-primary">{planetObjects.length}</div>
-                <div className="text-xs text-muted-foreground">Objects on planet</div>
+            <div className="absolute right-4 top-4 z-10 rounded-2xl border border-border/40 bg-card/70 px-3 py-2 backdrop-blur-sm text-center">
+              <div className="text-lg font-black text-gradient-primary">{planetObjects.length}</div>
+              <div className="text-[11px] text-muted-foreground">Objects</div>
+            </div>
+          )}
+
+          {/* Next milestone progress */}
+          {nextMilestone && longestStreak > 0 && (
+            <div className="absolute left-4 top-4 z-10 rounded-2xl border border-border/40 bg-card/70 px-3 py-2.5 backdrop-blur-sm w-44">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-sm">{nextMilestone.emoji}</span>
+                <span className="text-[11px] font-bold text-foreground/80">{nextMilestone.label}</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-muted/60 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
+                  style={{ width: `${Math.min(100, (longestStreak / nextMilestone.streak) * 100)}%` }}
+                />
+              </div>
+              <div className="mt-1 text-[10px] text-muted-foreground">
+                {longestStreak} / {nextMilestone.streak} days
               </div>
             </div>
           )}
 
-          {/* Welcome overlay when no habits */}
+          {/* Welcome overlay */}
           {habits.length === 0 && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-              <div className="rounded-2xl border border-border/40 bg-card/80 p-6 text-center backdrop-blur-sm max-w-xs pointer-events-auto">
-                <div className="mb-3 text-5xl">🪐</div>
-                <h2 className="mb-2 text-lg font-black text-foreground">Your planet awaits!</h2>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  Add habits on the left to start growing trees, flowers, mountains and buildings on your planet.
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
+              <div className="rounded-3xl border border-border/40 bg-card/85 p-8 text-center backdrop-blur-md max-w-xs shadow-2xl animate-scale-in">
+                <div className="mb-4 text-6xl">🪐</div>
+                <h2 className="mb-2 text-xl font-black text-foreground font-display">Your planet awaits!</h2>
+                <p className="mb-5 text-sm text-muted-foreground leading-relaxed">
+                  Add habits to grow trees, flowers, mountains &amp; buildings on your very own world.
                 </p>
                 <button
                   onClick={() => setShowModal(true)}
-                  className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90 transition-all hover:scale-105"
+                  className="rounded-2xl bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground hover:bg-primary/90 transition-all hover:scale-105 shadow-lg glow-green"
                 >
                   🌱 Plant First Habit
                 </button>
@@ -137,15 +174,22 @@ const Index = () => {
           )}
 
           <Canvas
-            camera={{ position: [0, 2, 5.5], fov: 48 }}
+            camera={{ position: [0, 1.5, 5.8], fov: 46 }}
             shadows
             style={{ background: 'transparent' }}
-            gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
+            gl={{
+              antialias: true,
+              alpha: true,
+              toneMapping: THREE.ACESFilmicToneMapping,
+              toneMappingExposure: 1.15,
+            }}
           >
             <Suspense fallback={null}>
               <PlanetScene
                 planetObjects={planetObjects}
                 newObjectId={newObjectId}
+                sparklePos={sparklePos}
+                longestStreak={longestStreak}
               />
             </Suspense>
           </Canvas>

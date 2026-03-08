@@ -1,91 +1,59 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Habit, HabitEntry, PlanetObject, HabitType } from '@/types/habits';
+import { Habit, HabitEntry, PlanetObject, HabitType, HABIT_TYPE_CONFIG } from '@/types/habits';
 
-const HABITS_KEY = 'habitplanet_habits';
-const ENTRIES_KEY = 'habitplanet_entries';
-const PLANET_OBJECTS_KEY = 'habitplanet_objects';
+const HABITS_KEY = 'habitplanet_habits_v2';
+const ENTRIES_KEY = 'habitplanet_entries_v2';
+const PLANET_KEY  = 'habitplanet_objects_v2';
 
-function getTodayStr() {
+function today() {
   return new Date().toISOString().split('T')[0];
 }
-
-function generateId() {
+function uid() {
   return Math.random().toString(36).substring(2, 11);
 }
-
-function getRandomSurfacePosition(radius = 1.55): [number, number, number] {
-  // Random point on sphere surface
+function surfacePoint(radius = 1.6): [number, number, number] {
   const theta = Math.random() * Math.PI * 2;
-  const phi = Math.acos(2 * Math.random() - 1);
-  const x = radius * Math.sin(phi) * Math.cos(theta);
-  const y = radius * Math.sin(phi) * Math.sin(theta);
-  const z = radius * Math.cos(phi);
-  return [x, y, z];
+  const phi   = Math.acos(2 * Math.random() - 1);
+  return [
+    radius * Math.sin(phi) * Math.cos(theta),
+    radius * Math.sin(phi) * Math.sin(theta),
+    radius * Math.cos(phi),
+  ];
 }
-
-function getRandomColor(type: HabitType): string {
-  const colors: Record<HabitType, string[]> = {
-    tree: ['#2d8a4e', '#3da85f', '#4cc971', '#2a7a45', '#35a05a'],
-    flower: ['#e879a0', '#f59bb6', '#c94f8a', '#f472b6', '#ec4899'],
-    mountain: ['#7895b4', '#8fafc8', '#9bbad4', '#6a84a2', '#8ba5bf'],
-    building: ['#5b8def', '#4c7de6', '#7aa3f5', '#3d6ed8', '#60a5fa'],
-  };
-  const arr = colors[type];
+function randomColor(type: HabitType, milestone = false): string {
+  const cfg = HABIT_TYPE_CONFIG[type];
+  if (milestone) return cfg.milestoneColor;
+  const arr = cfg.colors;
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function load<T>(key: string, fallback: T): T {
+  try {
+    const s = localStorage.getItem(key);
+    return s ? (JSON.parse(s) as T) : fallback;
+  } catch { return fallback; }
+}
+
 export function useHabits() {
-  const [habits, setHabits] = useState<Habit[]>(() => {
-    try {
-      const stored = localStorage.getItem(HABITS_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [habits,        setHabits]        = useState<Habit[]>       (() => load(HABITS_KEY, []));
+  const [entries,       setEntries]        = useState<HabitEntry[]> (() => load(ENTRIES_KEY, []));
+  const [planetObjects, setPlanetObjects] = useState<PlanetObject[]>(() => load(PLANET_KEY, []));
+  const [newObjectId,   setNewObjectId]   = useState<string | null>(null);
+  const [sparklePos,    setSparklePos]    = useState<[number, number, number] | null>(null);
 
-  const [entries, setEntries] = useState<HabitEntry[]>(() => {
-    try {
-      const stored = localStorage.getItem(ENTRIES_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  useEffect(() => { localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); },        [habits]);
+  useEffect(() => { localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); },       [entries]);
+  useEffect(() => { localStorage.setItem(PLANET_KEY,  JSON.stringify(planetObjects)); }, [planetObjects]);
 
-  const [planetObjects, setPlanetObjects] = useState<PlanetObject[]>(() => {
-    try {
-      const stored = localStorage.getItem(PLANET_OBJECTS_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [newObjectId, setNewObjectId] = useState<string | null>(null);
-
-  useEffect(() => {
-    localStorage.setItem(HABITS_KEY, JSON.stringify(habits));
-  }, [habits]);
-
-  useEffect(() => {
-    localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+  const isCompletedToday = useCallback((habitId: string) => {
+    const t = today();
+    return entries.some(e => e.habitId === habitId && e.date === t && e.completed);
   }, [entries]);
 
-  useEffect(() => {
-    localStorage.setItem(PLANET_OBJECTS_KEY, JSON.stringify(planetObjects));
-  }, [planetObjects]);
-
   const addHabit = useCallback((name: string, type: HabitType, icon: string) => {
-    const newHabit: Habit = {
-      id: generateId(),
-      name,
-      icon,
-      type,
-      streak: 0,
-      createdAt: new Date().toISOString(),
-    };
-    setHabits(prev => [...prev, newHabit]);
+    setHabits(prev => [...prev, {
+      id: uid(), name, icon, type, streak: 0, createdAt: new Date().toISOString(),
+    }]);
   }, []);
 
   const deleteHabit = useCallback((habitId: string) => {
@@ -93,66 +61,62 @@ export function useHabits() {
     setEntries(prev => prev.filter(e => e.habitId !== habitId));
   }, []);
 
-  const isCompletedToday = useCallback((habitId: string) => {
-    const today = getTodayStr();
-    return entries.some(e => e.habitId === habitId && e.date === today && e.completed);
-  }, [entries]);
-
   const completeHabit = useCallback((habitId: string) => {
     if (isCompletedToday(habitId)) return;
 
-    const today = getTodayStr();
-    const newEntry: HabitEntry = {
-      habitId,
-      date: today,
-      completed: true,
-    };
+    const t = today();
+    setEntries(prev => [...prev, { habitId, date: t, completed: true }]);
 
-    setEntries(prev => [...prev, newEntry]);
-
-    // Update streak
+    let newStreak = 0;
     setHabits(prev => prev.map(h => {
       if (h.id !== habitId) return h;
-      return { ...h, streak: h.streak + 1 };
+      newStreak = h.streak + 1;
+      return { ...h, streak: newStreak };
     }));
 
-    // Spawn planet object
     const habit = habits.find(h => h.id === habitId);
-    if (habit) {
-      const objId = generateId();
-      const newObj: PlanetObject = {
-        id: objId,
-        type: habit.type,
-        position: getRandomSurfacePosition(),
-        scale: 0.15 + Math.random() * 0.15,
-        color: getRandomColor(habit.type),
-        rotation: Math.random() * Math.PI * 2,
-      };
-      setPlanetObjects(prev => [...prev, newObj]);
-      setNewObjectId(objId);
-      setTimeout(() => setNewObjectId(null), 1500);
-    }
+    if (!habit) return;
+
+    // Determine if milestone
+    const currentStreak = (habits.find(h => h.id === habitId)?.streak ?? 0) + 1;
+    const isMilestone = [7, 30, 100].includes(currentStreak);
+
+    const pos   = surfacePoint(isMilestone ? 1.62 : 1.58);
+    const objId = uid();
+    const scale = isMilestone
+      ? 0.28 + Math.random() * 0.14
+      : 0.13 + Math.random() * 0.12;
+
+    const newObj: PlanetObject = {
+      id: objId,
+      type: habit.type,
+      position: pos,
+      scale,
+      color: randomColor(habit.type, isMilestone),
+      rotation: Math.random() * Math.PI * 2,
+      milestone: isMilestone,
+    };
+
+    setPlanetObjects(prev => [...prev, newObj]);
+    setNewObjectId(objId);
+    setSparklePos(pos);
+    setTimeout(() => setNewObjectId(null), 2000);
+    setTimeout(() => setSparklePos(null), 2000);
   }, [habits, isCompletedToday]);
 
-  const getTotalCompletions = useCallback(() => {
-    return entries.filter(e => e.completed).length;
-  }, [entries]);
+  const getTotalCompletions = useCallback(() =>
+    entries.filter(e => e.completed).length, [entries]);
 
-  const getLongestStreak = useCallback(() => {
-    if (habits.length === 0) return 0;
-    return Math.max(...habits.map(h => h.streak), 0);
-  }, [habits]);
+  const getLongestStreak = useCallback(() =>
+    habits.length === 0 ? 0 : Math.max(...habits.map(h => h.streak), 0), [habits]);
+
+  const getTodayCount = useCallback(() =>
+    habits.filter(h => isCompletedToday(h.id)).length, [habits, isCompletedToday]);
 
   return {
-    habits,
-    entries,
-    planetObjects,
-    newObjectId,
-    addHabit,
-    deleteHabit,
-    completeHabit,
-    isCompletedToday,
-    getTotalCompletions,
-    getLongestStreak,
+    habits, entries, planetObjects,
+    newObjectId, sparklePos,
+    addHabit, deleteHabit, completeHabit, isCompletedToday,
+    getTotalCompletions, getLongestStreak, getTodayCount,
   };
 }

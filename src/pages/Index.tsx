@@ -35,6 +35,7 @@ const Index = () => {
     isCompletedToday,
     getTotalCompletions,
     getLongestStreak,
+    getCurrentStreak,
     getTodayCount,
   } = useHabits({ getToday });
 
@@ -51,6 +52,7 @@ const Index = () => {
 
   const totalCompletions = getTotalCompletions();
   const longestStreak    = getLongestStreak();
+  const currentStreak    = getCurrentStreak();
   const todayCompleted   = getTodayCount();
 
   // Next milestone
@@ -85,11 +87,20 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Best Streak */}
+          {/* Current Streak */}
           <div className="stat-chip">
             <Flame size={13} className="text-streak-gold" />
             <div className="text-center">
-              <div className="text-sm font-black text-gradient-gold leading-none">{longestStreak}</div>
+              <div className="text-sm font-black text-gradient-gold leading-none">{currentStreak}</div>
+              <div className="stat-label">Current</div>
+            </div>
+          </div>
+
+          {/* Longest Streak */}
+          <div className="stat-chip border-yellow-500/30 bg-yellow-500/10">
+            <Trophy size={13} className="text-yellow-400" />
+            <div className="text-center">
+              <div className="text-sm font-black text-yellow-300 leading-none">{longestStreak}</div>
               <div className="stat-label">Best streak</div>
             </div>
           </div>
@@ -105,10 +116,10 @@ const Index = () => {
 
           {/* Active milestone badge */}
           {prevMilestone && (
-            <div className="stat-chip border-yellow-500/30 bg-yellow-500/10">
-              <Trophy size={13} className="text-yellow-400" />
+            <div className="stat-chip border-primary/30 bg-primary/10">
+              <span className="text-sm">{prevMilestone.emoji}</span>
               <div className="text-center">
-                <div className="text-xs font-black text-yellow-300 leading-none">{prevMilestone.emoji} {prevMilestone.label}</div>
+                <div className="text-xs font-black text-primary leading-none">{prevMilestone.label}</div>
                 <div className="stat-label">{prevMilestone.description}</div>
               </div>
             </div>

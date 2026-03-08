@@ -91,9 +91,12 @@ export function HabitPanel({
 
                 {/* Bottom row */}
                 <div className="mt-2.5 flex items-center gap-2">
-                  <div className="flex items-center gap-1 rounded-full bg-muted/60 px-2.5 py-1">
-                    <Flame size={11} className="text-streak-gold" />
-                    <span className="text-xs font-black text-foreground/80">{habit.streak}</span>
+                  <div className="flex flex-col items-center rounded-xl bg-muted/60 px-2.5 py-1.5 min-w-[44px]">
+                    <div className="flex items-center gap-0.5">
+                      <Flame size={10} className="text-streak-gold" />
+                      <span className="text-sm font-black text-foreground/90 leading-none">{habit.streak}</span>
+                    </div>
+                    <span className="text-[9px] text-muted-foreground leading-none mt-0.5">streak</span>
                   </div>
 
                   <button

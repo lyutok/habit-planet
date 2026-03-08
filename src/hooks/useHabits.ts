@@ -117,6 +117,10 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
   const getLongestStreak = useCallback(() =>
     habits.length === 0 ? 0 : Math.max(...habits.map(h => h.streak), 0), [habits]);
 
+  /** The highest current streak among all habits */
+  const getCurrentStreak = useCallback(() =>
+    habits.length === 0 ? 0 : Math.max(...habits.map(h => h.streak), 0), [habits]);
+
   const getTodayCount = useCallback(() =>
     habits.filter(h => isCompletedToday(h.id)).length, [habits, isCompletedToday]);
 
@@ -124,6 +128,6 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
     habits, entries, planetObjects,
     newObjectId, sparklePos,
     addHabit, deleteHabit, completeHabit, isCompletedToday,
-    getTotalCompletions, getLongestStreak, getTodayCount,
+    getTotalCompletions, getLongestStreak, getCurrentStreak, getTodayCount,
   };
 }

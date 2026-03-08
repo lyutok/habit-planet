@@ -72,8 +72,10 @@ function Tree({ pos, scale, color, milestone }: { pos:[number,number,number]; sc
   ), [pos]);
   const glowRef = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
-    if (glowRef.current) glowRef.current.material.opacity = milestone
-      ? 0.25 + Math.sin(clock.elapsedTime * 2) * 0.12 : 0;
+    if (glowRef.current) {
+      const mat = glowRef.current.material as THREE.MeshPhongMaterial;
+      mat.opacity = milestone ? 0.25 + Math.sin(clock.elapsedTime * 2) * 0.12 : 0;
+    }
   });
 
   return (

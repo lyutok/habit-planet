@@ -1048,14 +1048,32 @@ function FloatingPlanet({ children }: { children: React.ReactNode }) {
 // ─── Planet object dispatch ───────────────────────────────────────────────────
 function PlanetObjectMesh({ obj, isNew }: { obj: PlanetObject; isNew: boolean }) {
   const props = { pos: obj.position, scale: obj.scale, color: obj.color, milestone: obj.milestone };
-  const mesh = {
-    tree:     <Tree     {...props} />,
-    flower:   <Flower   {...props} />,
-    mountain: <Mountain {...props} />,
-    building: <Building {...props} />,
-  } as Record<HabitType, JSX.Element>;
+  const sub = obj.subType;
 
-  return <GrowIn active={isNew}>{mesh[obj.type]}</GrowIn>;
+  let mesh: JSX.Element;
+  if (obj.type === 'tree') {
+    if (sub === 'palm')    mesh = <Palm    {...props} />;
+    else if (sub === 'oak')    mesh = <Oak     {...props} />;
+    else if (sub === 'cactus') mesh = <Cactus  {...props} />;
+    else                       mesh = <Pine    {...props} />;
+  } else if (obj.type === 'flower') {
+    if (sub === 'tulip')     mesh = <Tulip    {...props} />;
+    else if (sub === 'lotus')    mesh = <Lotus    {...props} />;
+    else if (sub === 'sunflower') mesh = <Sunflower {...props} />;
+    else                         mesh = <Daisy    {...props} />;
+  } else if (obj.type === 'mountain') {
+    if (sub === 'volcano')  mesh = <Volcano  {...props} />;
+    else if (sub === 'hill')    mesh = <Hill     {...props} />;
+    else if (sub === 'glacier') mesh = <Glacier  {...props} />;
+    else                        mesh = <Peak     {...props} />;
+  } else {
+    if (sub === 'skyscraper') mesh = <Skyscraper {...props} />;
+    else if (sub === 'dome')    mesh = <Dome       {...props} />;
+    else if (sub === 'cabin')   mesh = <Cabin      {...props} />;
+    else                        mesh = <Tower      {...props} />;
+  }
+
+  return <GrowIn active={isNew}>{mesh}</GrowIn>;
 }
 
 // ─── Main exported scene ──────────────────────────────────────────────────────

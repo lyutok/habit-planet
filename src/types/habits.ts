@@ -50,8 +50,8 @@ export const HABIT_TYPE_CONFIG: Record<HabitType, {
     label: 'Mountain',
     icon: '⛰️',
     description: 'Exercise, Fitness',
-    colors: ['#7895b4', '#8fafc8', '#9bbad4', '#6a84a2', '#8ba5bf'],
-    milestoneColor: '#c0e0ff',
+    colors: ['#8b5e3c', '#a0714f', '#7a4f2e', '#c49a6c', '#6b4226'],
+    milestoneColor: '#e8c99a',
   },
   building: {
     label: 'Building',

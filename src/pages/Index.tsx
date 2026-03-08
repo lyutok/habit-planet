@@ -24,6 +24,7 @@ function LoadingPlanet() {
 
 const Index = () => {
   const { dayOffset, advanceDay, resetOffset, getToday, jumpDays } = useDevDate();
+  const { signOut, user } = useAuth();
   const [showDevPanel, setShowDevPanel] = useState(false);
   const isMobile = useIsMobile();
   const isDev = import.meta.env.DEV;

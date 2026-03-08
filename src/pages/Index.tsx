@@ -1,11 +1,12 @@
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { PlanetScene } from '@/components/PlanetScene';
 import { HabitPanel } from '@/components/HabitPanel';
 import { AddHabitModal } from '@/components/AddHabitModal';
 import { useHabits } from '@/hooks/useHabits';
-import { Flame, Globe, Sparkles, Trophy } from 'lucide-react';
+import { useDevDate } from '@/hooks/useDevDate';
+import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
 
 function LoadingPlanet() {

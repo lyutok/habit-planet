@@ -42,6 +42,7 @@ const Index = () => {
   } = useHabits({ getToday });
 
   const [showModal, setShowModal] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   // Toggle dev panel with 'D' key
   useEffect(() => {

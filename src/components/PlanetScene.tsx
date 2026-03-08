@@ -192,7 +192,8 @@ function FloatingPlanet({ children }: { children: React.ReactNode }) {
 
 // Stars background
 function Stars() {
-  const positions = useMemo(() => {
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
     const pts: number[] = [];
     for (let i = 0; i < 300; i++) {
       pts.push(
@@ -201,17 +202,12 @@ function Stars() {
         (Math.random() - 0.5) * 80
       );
     }
-    return new Float32Array(pts);
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    return geo;
   }, []);
 
   return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
-      </bufferGeometry>
+    <points geometry={geometry}>
       <pointsMaterial color="#ffffff" size={0.12} transparent opacity={0.8} sizeAttenuation />
     </points>
   );

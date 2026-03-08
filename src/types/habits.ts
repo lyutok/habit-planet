@@ -38,6 +38,7 @@ export interface HabitEntry {
 export interface PlanetObject {
   id: string;
   type: HabitType;
+  subType?: ObjectSubType;
   position: [number, number, number];
   scale: number;
   color: string;

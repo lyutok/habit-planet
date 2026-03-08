@@ -6,8 +6,6 @@ import { PlanetObject, HabitType } from '@/types/habits';
 
 // Low-poly planet sphere
 function Planet() {
-  const meshRef = useRef<THREE.Mesh>(null);
-
   return (
     <group>
       {/* Ocean/base layer */}

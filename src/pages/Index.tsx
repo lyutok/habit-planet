@@ -6,7 +6,8 @@ import { HabitPanel } from '@/components/HabitPanel';
 import { AddHabitModal } from '@/components/AddHabitModal';
 import { useHabits } from '@/hooks/useHabits';
 import { useDevDate } from '@/hooks/useDevDate';
-import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
 
 function LoadingPlanet() {
@@ -23,6 +24,8 @@ function LoadingPlanet() {
 const Index = () => {
   const { dayOffset, advanceDay, resetOffset, getToday, jumpDays } = useDevDate();
   const [showDevPanel, setShowDevPanel] = useState(false);
+  const isMobile = useIsMobile();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const {
     habits,
@@ -65,51 +68,51 @@ const Index = () => {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Top Bar */}
-      <header className="flex shrink-0 items-center justify-between border-b border-border/40 bg-card/30 px-5 py-3 backdrop-blur-xl">
+      <header className="flex shrink-0 items-center justify-between border-b border-border/40 bg-card/30 px-3 py-2 backdrop-blur-xl sm:px-5 sm:py-3">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/30">
-            <Globe size={18} className="text-primary" />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/30 sm:h-9 sm:w-9">
+            <Globe size={16} className="text-primary sm:size-[18px]" />
           </div>
           <div>
-            <h1 className="text-lg font-black leading-none tracking-tight text-gradient-primary font-display">
+            <h1 className="text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
               Habit Planet
             </h1>
-            <p className="text-[11px] text-muted-foreground leading-none mt-0.5">Grow your world, one habit at a time</p>
+            <p className="hidden text-[11px] text-muted-foreground leading-none mt-0.5 sm:block">Grow your world, one habit at a time</p>
           </div>
         </div>
 
         {/* Stats row */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Today */}
           <div className="stat-chip">
-            <Sparkles size={13} className="text-primary" />
+            <Sparkles size={12} className="text-primary" />
             <div className="text-center">
-              <div className="text-sm font-black text-gradient-primary leading-none">{todayCompleted}/{habits.length}</div>
+              <div className="text-xs font-black text-gradient-primary leading-none sm:text-sm">{todayCompleted}/{habits.length}</div>
               <div className="stat-label">Today</div>
             </div>
           </div>
 
           {/* Current Streak */}
           <div className="stat-chip">
-            <Flame size={13} className="text-streak-gold" />
+            <Flame size={12} className="text-streak-gold" />
             <div className="text-center">
-              <div className="text-sm font-black text-gradient-gold leading-none">{currentStreak}</div>
-              <div className="stat-label">Current</div>
+              <div className="text-xs font-black text-gradient-gold leading-none sm:text-sm">{currentStreak}</div>
+              <div className="stat-label">Streak</div>
             </div>
           </div>
 
-          {/* Longest Streak */}
-          <div className="stat-chip border-yellow-500/30 bg-yellow-500/10">
-            <Trophy size={13} className="text-yellow-400" />
+          {/* Longest Streak — hidden on very small screens */}
+          <div className="stat-chip border-yellow-500/30 bg-yellow-500/10 hidden xs:flex sm:flex">
+            <Trophy size={12} className="text-yellow-400" />
             <div className="text-center">
-              <div className="text-sm font-black text-yellow-300 leading-none">{longestStreak}</div>
-              <div className="stat-label">Best streak</div>
+              <div className="text-xs font-black text-yellow-300 leading-none sm:text-sm">{longestStreak}</div>
+              <div className="stat-label">Best</div>
             </div>
           </div>
 
-          {/* Total */}
-          <div className="stat-chip">
+          {/* Total — hidden on mobile */}
+          <div className="stat-chip hidden sm:flex">
             <span className="text-sm">🌟</span>
             <div className="text-center">
               <div className="text-sm font-black text-foreground leading-none">{totalCompletions}</div>
@@ -117,9 +120,9 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Active milestone badge */}
+          {/* Active milestone badge — hidden on mobile */}
           {prevMilestone && (
-            <div className="stat-chip border-primary/30 bg-primary/10">
+            <div className="stat-chip border-primary/30 bg-primary/10 hidden md:flex">
               <span className="text-sm">{prevMilestone.emoji}</span>
               <div className="text-center">
                 <div className="text-xs font-black text-primary leading-none">{prevMilestone.label}</div>
@@ -131,26 +134,28 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel */}
-        <aside className="flex w-72 shrink-0 flex-col border-r border-border/40 bg-card/20 p-4 backdrop-blur-xl">
-          <HabitPanel
-            habits={habits}
-            isCompletedToday={isCompletedToday}
-            onComplete={completeHabit}
-            onDelete={deleteHabit}
-            onAddHabit={() => setShowModal(true)}
-            nextMilestone={nextMilestone}
-            longestStreak={longestStreak}
-          />
-        </aside>
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Left Panel — desktop only */}
+        {!isMobile && (
+          <aside className="flex w-72 shrink-0 flex-col border-r border-border/40 bg-card/20 p-4 backdrop-blur-xl">
+            <HabitPanel
+              habits={habits}
+              isCompletedToday={isCompletedToday}
+              onComplete={completeHabit}
+              onDelete={deleteHabit}
+              onAddHabit={() => setShowModal(true)}
+              nextMilestone={nextMilestone}
+              longestStreak={longestStreak}
+            />
+          </aside>
+        )}
 
         {/* 3D Canvas */}
         <main className="relative flex-1">
           {/* Bottom hint */}
           <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border/40 bg-card/60 px-3 py-1.5 backdrop-blur-sm pointer-events-none">
             <p className="text-xs text-muted-foreground">
-              🖱️ Drag to rotate · Scroll to zoom
+              {isMobile ? '👆 Drag to rotate · Pinch to zoom' : '🖱️ Drag to rotate · Scroll to zoom'}
             </p>
           </div>
 
@@ -164,7 +169,7 @@ const Index = () => {
 
           {/* Next milestone progress */}
           {nextMilestone && longestStreak > 0 && (
-            <div className="absolute left-4 top-4 z-10 rounded-2xl border border-border/40 bg-card/70 px-3 py-2.5 backdrop-blur-sm w-44">
+            <div className="absolute left-4 top-4 z-10 rounded-2xl border border-border/40 bg-card/70 px-3 py-2.5 backdrop-blur-sm w-40 sm:w-44">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="text-sm">{nextMilestone.emoji}</span>
                 <span className="text-[11px] font-bold text-foreground/80">{nextMilestone.label}</span>
@@ -184,7 +189,7 @@ const Index = () => {
           {/* Welcome overlay */}
           {habits.length === 0 && (
             <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <div className="rounded-3xl border border-border/40 bg-card/85 p-8 text-center backdrop-blur-md max-w-xs shadow-2xl animate-scale-in">
+              <div className="rounded-3xl border border-border/40 bg-card/85 p-6 sm:p-8 text-center backdrop-blur-md max-w-xs shadow-2xl animate-scale-in mx-4">
                 <div className="mb-4 text-6xl">🪐</div>
                 <h2 className="mb-2 text-xl font-black text-foreground font-display">Your planet awaits!</h2>
                 <p className="mb-5 text-sm text-muted-foreground leading-relaxed">
@@ -223,6 +228,53 @@ const Index = () => {
         </main>
       </div>
 
+      {/* Mobile Bottom Drawer */}
+      {isMobile && (
+        <>
+          {/* Backdrop */}
+          {drawerOpen && (
+            <div
+              className="fixed inset-0 z-30 bg-background/50 backdrop-blur-sm"
+              onClick={() => setDrawerOpen(false)}
+            />
+          )}
+
+          {/* Drawer */}
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-40 flex flex-col rounded-t-3xl border-t border-border/40 bg-card/95 backdrop-blur-xl shadow-2xl transition-transform duration-300 ease-in-out ${
+              drawerOpen ? 'translate-y-0' : 'translate-y-[calc(100%-4rem)]'
+            }`}
+            style={{ maxHeight: '80vh' }}
+          >
+            {/* Drag handle + toggle */}
+            <button
+              onClick={() => setDrawerOpen(v => !v)}
+              className="flex w-full flex-col items-center gap-1.5 pb-2 pt-3 active:bg-muted/20 transition-colors"
+            >
+              <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">My Habits</span>
+                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">{habits.length}</span>
+                {drawerOpen ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronUp size={14} className="text-muted-foreground" />}
+              </div>
+            </button>
+
+            {/* Panel content */}
+            <div className="flex-1 overflow-y-auto px-4 pb-4">
+              <HabitPanel
+                habits={habits}
+                isCompletedToday={isCompletedToday}
+                onComplete={completeHabit}
+                onDelete={deleteHabit}
+                onAddHabit={() => { setShowModal(true); setDrawerOpen(false); }}
+                nextMilestone={nextMilestone}
+                longestStreak={longestStreak}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Add Habit Modal */}
       {showModal && (
         <AddHabitModal
@@ -233,7 +285,7 @@ const Index = () => {
 
       {/* Dev Panel — toggle with 'D' key */}
       <div
-        className={`fixed bottom-5 right-5 z-50 transition-all duration-300 ${
+        className={`fixed bottom-20 right-5 z-50 transition-all duration-300 sm:bottom-5 ${
           showDevPanel ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
         }`}
       >
@@ -318,7 +370,7 @@ const Index = () => {
       {!showDevPanel && (
         <button
           onClick={() => setShowDevPanel(true)}
-          className="fixed bottom-5 right-5 z-50 rounded-full border border-border/40 bg-card/70 p-2.5 backdrop-blur-sm text-muted-foreground/40 hover:text-muted-foreground transition-all hover:scale-110"
+          className="fixed bottom-20 right-5 z-50 rounded-full border border-border/40 bg-card/70 p-2.5 backdrop-blur-sm text-muted-foreground/40 hover:text-muted-foreground transition-all hover:scale-110 sm:bottom-5"
           title="Dev panel (D)"
         >
           <FlaskConical size={14} />

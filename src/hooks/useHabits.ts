@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Habit, HabitEntry, PlanetObject, HabitType, HABIT_TYPE_CONFIG, ICON_TO_SUBTYPE } from '@/types/habits';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+
+const HABITS_KEY = 'habitplanet_habits_v2';
+const ENTRIES_KEY = 'habitplanet_entries_v2';
+const PLANET_KEY  = 'habitplanet_objects_v2';
 
 function uid() {
   return Math.random().toString(36).substring(2, 11);
@@ -22,177 +24,104 @@ function randomColor(type: HabitType, milestone = false): string {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function load<T>(key: string, fallback: T): T {
+  try {
+    const s = localStorage.getItem(key);
+    return s ? (JSON.parse(s) as T) : fallback;
+  } catch { return fallback; }
+}
+
 interface UseHabitsOptions {
+  /** Override today's date string (YYYY-MM-DD) for testing */
   getToday?: () => string;
 }
 
 export function useHabits({ getToday }: UseHabitsOptions = {}) {
-  const { user } = useAuth();
   const todayFn = useCallback(
     () => getToday ? getToday() : new Date().toISOString().split('T')[0],
     [getToday]
   );
 
-  const [habits,        setHabits]        = useState<Habit[]>([]);
-  const [entries,       setEntries]        = useState<HabitEntry[]>([]);
-  const [planetObjects, setPlanetObjects] = useState<PlanetObject[]>([]);
+  const [habits,        setHabits]        = useState<Habit[]>       (() => load(HABITS_KEY, []));
+  const [entries,       setEntries]        = useState<HabitEntry[]> (() => load(ENTRIES_KEY, []));
+  const [planetObjects, setPlanetObjects] = useState<PlanetObject[]>(() => load(PLANET_KEY, []));
   const [newObjectId,   setNewObjectId]   = useState<string | null>(null);
   const [sparklePos,    setSparklePos]    = useState<[number, number, number] | null>(null);
-  const [loading,       setLoading]        = useState(true);
 
-  // ── Load all data for user ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (!user) {
-      setHabits([]);
-      setEntries([]);
-      setPlanetObjects([]);
-      setLoading(false);
-      return;
-    }
-
-    const load = async () => {
-      setLoading(true);
-      const [habitsRes, entriesRes, objectsRes] = await Promise.all([
-        supabase.from('habits').select('*').eq('user_id', user.id).order('created_at'),
-        supabase.from('habit_entries').select('*').eq('user_id', user.id),
-        supabase.from('planet_objects').select('*').eq('user_id', user.id).order('created_at'),
-      ]);
-
-      if (habitsRes.data) {
-        setHabits(habitsRes.data.map(h => ({
-          id: h.id,
-          name: h.name,
-          icon: h.icon,
-          type: h.type as HabitType,
-          streak: h.streak,
-          createdAt: h.created_at,
-        })));
-      }
-      if (entriesRes.data) {
-        setEntries(entriesRes.data.map(e => ({
-          habitId: e.habit_id,
-          date: e.date,
-          completed: e.completed,
-        })));
-      }
-      if (objectsRes.data) {
-        setPlanetObjects(objectsRes.data.map(o => ({
-          id: o.id,
-          type: o.type as HabitType,
-          subType: o.sub_type as any,
-          position: [o.position_x, o.position_y, o.position_z] as [number, number, number],
-          scale: o.scale,
-          color: o.color,
-          rotation: o.rotation,
-          milestone: o.milestone,
-        })));
-      }
-      setLoading(false);
-    };
-
-    load();
-  }, [user]);
+  useEffect(() => { localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); },        [habits]);
+  useEffect(() => { localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); },       [entries]);
+  useEffect(() => { localStorage.setItem(PLANET_KEY,  JSON.stringify(planetObjects)); }, [planetObjects]);
 
   const isCompletedToday = useCallback((habitId: string) => {
     const t = todayFn();
     return entries.some(e => e.habitId === habitId && e.date === t && e.completed);
   }, [entries, todayFn]);
 
-  const addHabit = useCallback(async (name: string, type: HabitType, icon: string) => {
-    if (!user) return;
-    const { data, error } = await supabase.from('habits').insert({
-      user_id: user.id, name, icon, type, streak: 0,
-    }).select().single();
-    if (!error && data) {
-      setHabits(prev => [...prev, {
-        id: data.id, name: data.name, icon: data.icon,
-        type: data.type as HabitType, streak: data.streak, createdAt: data.created_at,
-      }]);
-    }
-  }, [user]);
+  const addHabit = useCallback((name: string, type: HabitType, icon: string) => {
+    setHabits(prev => [...prev, {
+      id: uid(), name, icon, type, streak: 0, createdAt: new Date().toISOString(),
+    }]);
+  }, []);
 
-  const deleteHabit = useCallback(async (habitId: string) => {
-    if (!user) return;
-    await supabase.from('habits').delete().eq('id', habitId).eq('user_id', user.id);
-    // planet_objects and habit_entries cascade via FK
+  const deleteHabit = useCallback((habitId: string) => {
     setHabits(prev => prev.filter(h => h.id !== habitId));
     setEntries(prev => prev.filter(e => e.habitId !== habitId));
-    setPlanetObjects(prev => prev.filter(o => {
-      // can't easily filter by habit here; keep all planet objects (they're permanent anyway)
-      return true;
-    }));
-  }, [user]);
+  }, []);
 
-  const completeHabit = useCallback(async (habitId: string) => {
-    if (!user || isCompletedToday(habitId)) return;
+  const completeHabit = useCallback((habitId: string) => {
+    if (isCompletedToday(habitId)) return;
 
     const t = todayFn();
-
-    // Insert entry
-    await supabase.from('habit_entries').insert({
-      user_id: user.id, habit_id: habitId, date: t, completed: true,
-    });
     setEntries(prev => [...prev, { habitId, date: t, completed: true }]);
 
-    // Update streak
+    let newStreak = 0;
+    setHabits(prev => prev.map(h => {
+      if (h.id !== habitId) return h;
+      newStreak = h.streak + 1;
+      return { ...h, streak: newStreak };
+    }));
+
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
-    const newStreak = habit.streak + 1;
-    await supabase.from('habits').update({ streak: newStreak }).eq('id', habitId).eq('user_id', user.id);
-    setHabits(prev => prev.map(h => h.id === habitId ? { ...h, streak: newStreak } : h));
 
-    const isMilestone = [7, 30, 100].includes(newStreak);
+    // Determine if milestone
+    const currentStreak = (habits.find(h => h.id === habitId)?.streak ?? 0) + 1;
+    const isMilestone = [7, 30, 100].includes(currentStreak);
+
     const pos   = surfacePoint(isMilestone ? 1.62 : 1.58);
     const objId = uid();
-    const scale = isMilestone ? 0.28 + Math.random() * 0.14 : 0.13 + Math.random() * 0.12;
-    const color = randomColor(habit.type, isMilestone);
-    const rotation = Math.random() * Math.PI * 2;
-    const subType = ICON_TO_SUBTYPE[habit.icon];
-
-    const { data: objData } = await supabase.from('planet_objects').insert({
-      user_id: user.id,
-      type: habit.type,
-      sub_type: subType,
-      position_x: pos[0],
-      position_y: pos[1],
-      position_z: pos[2],
-      scale,
-      color,
-      rotation,
-      milestone: isMilestone,
-    }).select().single();
+    const scale = isMilestone
+      ? 0.28 + Math.random() * 0.14
+      : 0.13 + Math.random() * 0.12;
 
     const newObj: PlanetObject = {
-      id: objData?.id ?? objId,
+      id: objId,
       type: habit.type,
-      subType,
+      subType: ICON_TO_SUBTYPE[habit.icon],
       position: pos,
       scale,
-      color,
-      rotation,
+      color: randomColor(habit.type, isMilestone),
+      rotation: Math.random() * Math.PI * 2,
       milestone: isMilestone,
     };
 
     setPlanetObjects(prev => [...prev, newObj]);
-    setNewObjectId(newObj.id);
+    setNewObjectId(objId);
     setSparklePos(pos);
     setTimeout(() => setNewObjectId(null), 2000);
     setTimeout(() => setSparklePos(null), 2000);
-  }, [user, habits, isCompletedToday, todayFn]);
+  }, [habits, isCompletedToday, todayFn]);
 
-  const resetAll = useCallback(async () => {
-    if (!user) return;
-    await Promise.all([
-      supabase.from('planet_objects').delete().eq('user_id', user.id),
-      supabase.from('habit_entries').delete().eq('user_id', user.id),
-      supabase.from('habits').delete().eq('user_id', user.id),
-    ]);
+  const resetAll = useCallback(() => {
     setHabits([]);
     setEntries([]);
     setPlanetObjects([]);
     setNewObjectId(null);
     setSparklePos(null);
-  }, [user]);
+    localStorage.removeItem(HABITS_KEY);
+    localStorage.removeItem(ENTRIES_KEY);
+    localStorage.removeItem(PLANET_KEY);
+  }, []);
 
   const getTotalCompletions = useCallback(() =>
     entries.filter(e => e.completed).length, [entries]);
@@ -200,20 +129,24 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
   const getLongestStreak = useCallback(() =>
     habits.length === 0 ? 0 : Math.max(...habits.map(h => h.streak), 0), [habits]);
 
+  /** The highest current streak among all habits */
   const getCurrentStreak = useCallback(() =>
     habits.length === 0 ? 0 : Math.max(...habits.map(h => h.streak), 0), [habits]);
 
   const getTodayCount = useCallback(() =>
     habits.filter(h => isCompletedToday(h.id)).length, [habits, isCompletedToday]);
 
-  const simulateStreak = useCallback(async (days: number) => {
-    if (!user || habits.length === 0) return;
+  /**
+   * Simulate `days` consecutive days of completing all habits.
+   * Adds entries for each (habit, day) pair and spawns planet objects.
+   * Returns the number of days advanced so the caller can update dayOffset.
+   */
+  const simulateStreak = useCallback((days: number) => {
+    if (habits.length === 0) return;
 
     const baseDate = new Date(todayFn());
     const newEntries: HabitEntry[] = [];
     const newObjects: PlanetObject[] = [];
-    const dbEntries: { user_id: string; habit_id: string; date: string; completed: boolean }[] = [];
-    const dbObjects: { user_id: string; type: string; sub_type: string | undefined; position_x: number; position_y: number; position_z: number; scale: number; color: string; rotation: number; milestone: boolean }[] = [];
 
     habits.forEach(habit => {
       const currentStreak = habit.streak;
@@ -221,62 +154,41 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
         const date = new Date(baseDate);
         date.setDate(baseDate.getDate() + d);
         const dateStr = date.toISOString().split('T')[0];
+
+        // Skip if already has an entry for this date
         const alreadyDone = entries.some(e => e.habitId === habit.id && e.date === dateStr);
         if (alreadyDone) continue;
 
         newEntries.push({ habitId: habit.id, date: dateStr, completed: true });
-        dbEntries.push({ user_id: user.id, habit_id: habit.id, date: dateStr, completed: true });
 
         const streakAtDay = currentStreak + d;
         const isMilestone = [7, 30, 100].includes(streakAtDay);
         const pos   = surfacePoint(isMilestone ? 1.62 : 1.58);
-        const scale = isMilestone ? 0.28 + Math.random() * 0.14 : 0.13 + Math.random() * 0.12;
-        const color = randomColor(habit.type, isMilestone);
-        const rotation = Math.random() * Math.PI * 2;
-        const subType = ICON_TO_SUBTYPE[habit.icon];
+        const scale = isMilestone
+          ? 0.28 + Math.random() * 0.14
+          : 0.13 + Math.random() * 0.12;
 
-        const obj: PlanetObject = {
+        newObjects.push({
           id: uid(),
           type: habit.type,
-          subType,
+          subType: ICON_TO_SUBTYPE[habit.icon],
           position: pos,
           scale,
-          color,
-          rotation,
-          milestone: isMilestone,
-        };
-        newObjects.push(obj);
-        dbObjects.push({
-          user_id: user.id,
-          type: habit.type,
-          sub_type: subType,
-          position_x: pos[0],
-          position_y: pos[1],
-          position_z: pos[2],
-          scale,
-          color,
-          rotation,
+          color: randomColor(habit.type, isMilestone),
+          rotation: Math.random() * Math.PI * 2,
           milestone: isMilestone,
         });
       }
     });
 
-    if (dbEntries.length > 0) await supabase.from('habit_entries').insert(dbEntries);
-    if (dbObjects.length > 0) await supabase.from('planet_objects').insert(dbObjects);
-
-    // Update streaks
-    await Promise.all(habits.map(h =>
-      supabase.from('habits').update({ streak: h.streak + days }).eq('id', h.id).eq('user_id', user.id)
-    ));
-
     setEntries(prev => [...prev, ...newEntries]);
     setPlanetObjects(prev => [...prev, ...newObjects]);
     setHabits(prev => prev.map(h => ({ ...h, streak: h.streak + days })));
-  }, [user, habits, entries, todayFn]);
+  }, [habits, entries, todayFn]);
 
   return {
     habits, entries, planetObjects,
-    newObjectId, sparklePos, loading,
+    newObjectId, sparklePos,
     addHabit, deleteHabit, completeHabit, isCompletedToday,
     getTotalCompletions, getLongestStreak, getCurrentStreak, getTodayCount,
     simulateStreak, resetAll,

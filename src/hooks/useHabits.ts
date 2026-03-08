@@ -124,10 +124,60 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
   const getTodayCount = useCallback(() =>
     habits.filter(h => isCompletedToday(h.id)).length, [habits, isCompletedToday]);
 
+  /**
+   * Simulate `days` consecutive days of completing all habits.
+   * Adds entries for each (habit, day) pair and spawns planet objects.
+   * Returns the number of days advanced so the caller can update dayOffset.
+   */
+  const simulateStreak = useCallback((days: number) => {
+    if (habits.length === 0) return;
+
+    const baseDate = new Date(todayFn());
+    const newEntries: HabitEntry[] = [];
+    const newObjects: PlanetObject[] = [];
+
+    habits.forEach(habit => {
+      const currentStreak = habit.streak;
+      for (let d = 1; d <= days; d++) {
+        const date = new Date(baseDate);
+        date.setDate(baseDate.getDate() + d);
+        const dateStr = date.toISOString().split('T')[0];
+
+        // Skip if already has an entry for this date
+        const alreadyDone = entries.some(e => e.habitId === habit.id && e.date === dateStr);
+        if (alreadyDone) continue;
+
+        newEntries.push({ habitId: habit.id, date: dateStr, completed: true });
+
+        const streakAtDay = currentStreak + d;
+        const isMilestone = [7, 30, 100].includes(streakAtDay);
+        const pos   = surfacePoint(isMilestone ? 1.62 : 1.58);
+        const scale = isMilestone
+          ? 0.28 + Math.random() * 0.14
+          : 0.13 + Math.random() * 0.12;
+
+        newObjects.push({
+          id: uid(),
+          type: habit.type,
+          position: pos,
+          scale,
+          color: randomColor(habit.type, isMilestone),
+          rotation: Math.random() * Math.PI * 2,
+          milestone: isMilestone,
+        });
+      }
+    });
+
+    setEntries(prev => [...prev, ...newEntries]);
+    setPlanetObjects(prev => [...prev, ...newObjects]);
+    setHabits(prev => prev.map(h => ({ ...h, streak: h.streak + days })));
+  }, [habits, entries, todayFn]);
+
   return {
     habits, entries, planetObjects,
     newObjectId, sparklePos,
     addHabit, deleteHabit, completeHabit, isCompletedToday,
     getTotalCompletions, getLongestStreak, getCurrentStreak, getTodayCount,
+    simulateStreak,
   };
 }

@@ -772,29 +772,29 @@ function Butterfly({ pos, index }: { pos:[number,number,number]; index: number }
   useFrame(({ clock }) => {
     if (!groupRef.current || !wingRef.current) return;
     const t = clock.elapsedTime;
-    // Orbital path — figure-eight-ish by adding a sine on y
+    // Orbital path — fixed radius, up-and-down bobbing movement
     const speed  = 0.28 + index * 0.04;
     const angle  = t * speed + (index / 5) * Math.PI * 2;
     const r      = 2.12 + Math.sin(t * 0.55 + index * 1.7) * 0.18;
-    const yBob   = Math.sin(t * 1.1 + index * 1.4) * 0.34 + Math.sin(t * 0.3 + index) * 0.12;
+    const yBob   = Math.sin(t * 0.9 + index * 1.4) * 0.65 + Math.sin(t * 0.3 + index) * 0.25;
     groupRef.current.position.set(Math.cos(angle) * r, yBob, Math.sin(angle) * r);
     // Face forward along orbit
     groupRef.current.rotation.y = angle + Math.PI / 2;
-    // Gentle pitch with flight
-    groupRef.current.rotation.x = Math.sin(t * 1.0 + index) * 0.12;
-    // Wing flap — fast when moving, slows at apex
-    const flapSpeed = 11 + Math.sin(t * 0.6 + index) * 3;
-    const flapAmp   = 0.62 + Math.sin(t * 0.5 + index * 0.7) * 0.12;
+    // Gentle pitch following up-down motion
+    groupRef.current.rotation.x = Math.sin(t * 0.9 + index * 1.4) * 0.22;
+    // Wing flap — slowed by 50%
+    const flapSpeed = 5.5 + Math.sin(t * 0.3 + index) * 1.5;
+    const flapAmp   = 0.62 + Math.sin(t * 0.25 + index * 0.7) * 0.12;
     wingRef.current.rotation.z = Math.sin(t * flapSpeed + index) * flapAmp;
     // Subtle shimmer on trail
     if (trailRef.current) {
       (trailRef.current.material as THREE.MeshPhongMaterial).opacity =
-        0.12 + Math.sin(t * 8 + index) * 0.06;
+        0.12 + Math.sin(t * 4 + index) * 0.06;
     }
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} scale={0.65}>
       {/* wing flap pivot */}
       <group ref={wingRef}>
         <ButterflyWing side={1}  col={col} spotCol={spotCol} />

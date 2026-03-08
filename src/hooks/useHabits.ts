@@ -210,10 +210,10 @@ export function useHabits({ getToday }: UseHabitsOptions = {}) {
     if (!user || habits.length === 0) return;
 
     const baseDate = new Date(todayFn());
-    const newEntries: typeof entries = [];
+    const newEntries: HabitEntry[] = [];
     const newObjects: PlanetObject[] = [];
-    const dbEntries: object[] = [];
-    const dbObjects: object[] = [];
+    const dbEntries: { user_id: string; habit_id: string; date: string; completed: boolean }[] = [];
+    const dbObjects: { user_id: string; type: string; sub_type: string | undefined; position_x: number; position_y: number; position_z: number; scale: number; color: string; rotation: number; milestone: boolean }[] = [];
 
     habits.forEach(habit => {
       const currentStreak = habit.streak;

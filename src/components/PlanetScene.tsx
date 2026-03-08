@@ -132,7 +132,6 @@ function Flower({
       </mesh>
       {/* Leaf */}
       <mesh castShadow position={[0.14, 0.22, 0]} rotation={[0, 0, -0.6]}>
-        <ellipseCurve />
         <boxGeometry args={[0.22, 0.08, 0.03]} />
         <meshPhongMaterial color="#48a048" flatShading />
       </mesh>

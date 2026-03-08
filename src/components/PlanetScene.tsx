@@ -704,94 +704,150 @@ function Cabin({ pos, scale, color, milestone }: { pos:[number,number,number]; s
   );
 }
 
-// ─── Orbital Rings (30-day milestone) ────────────────────────────────────────
-// Glowing tilted rings with orbiting dot particles — Saturn-esque but ethereal
-
-function OrbitRing({ radius, tiltX, tiltZ, color, glowColor, speed, particleCount, orbitOffset }: {
-  radius: number; tiltX: number; tiltZ: number; color: string; glowColor: string;
-  speed: number; particleCount: number; orbitOffset: number;
-}) {
-  const particleRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const ringRef = useRef<THREE.Mesh>(null);
-
-  // Build ring geometry via a torus
-  const ringGeo = useMemo(() => new THREE.TorusGeometry(radius, 0.018, 8, 80), [radius]);
-
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    // Gentle ring pulse
-    if (ringRef.current) {
-      const mat = ringRef.current.material as THREE.MeshPhongMaterial;
-      mat.opacity = 0.35 + Math.sin(t * 1.2 + orbitOffset) * 0.12;
-    }
-    // Orbit each particle along the ring path
-    particleRefs.current.forEach((mesh, i) => {
-      if (!mesh) return;
-      const angle = t * speed + orbitOffset + (i / particleCount) * Math.PI * 2;
-      mesh.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
-      const mat = mesh.material as THREE.MeshPhongMaterial;
-      mat.opacity = 0.6 + Math.sin(t * 3 + i * 1.2) * 0.3;
-      const s = 0.7 + Math.sin(t * 2.5 + i * 0.9) * 0.3;
-      mesh.scale.setScalar(s);
-    });
-  });
-
+// ─── Butterfly (milestone creature at 30-day streak) ─────────────────────────
+// Wing shape built from multiple overlapping ellipsoids for an organic silhouette
+function ButterflyWing({ side, col, spotCol }: { side: 1 | -1; col: string; spotCol: string }) {
+  const s = side;
   return (
-    <group rotation={[tiltX, 0, tiltZ]}>
-      {/* Ring band */}
-      <mesh ref={ringRef} geometry={ringGeo}>
-        <meshPhongMaterial
-          color={color} transparent opacity={0.38}
-          emissive={glowColor} emissiveIntensity={0.55}
-          side={THREE.DoubleSide} depthWrite={false}
-        />
+    <group>
+      {/* large upper lobe */}
+      <mesh position={[s * 0.22, 0.05, 0]} rotation={[0, 0, s * 0.18]} scale={[1, 0.72, 0.08]}>
+        <sphereGeometry args={[0.28, 8, 6]} />
+        <meshPhongMaterial color={col} transparent opacity={0.92} side={THREE.DoubleSide}
+          shininess={80} specular="#ffffff" emissive={col} emissiveIntensity={0.18} depthWrite={false} />
       </mesh>
-      {/* Glow halo (slightly larger torus) */}
-      <mesh>
-        <torusGeometry args={[radius, 0.038, 6, 80]} />
-        <meshPhongMaterial
-          color={glowColor} transparent opacity={0.08}
-          emissive={glowColor} emissiveIntensity={0.4}
-          side={THREE.DoubleSide} depthWrite={false}
-        />
+      {/* secondary upper lobe (forward sweep) */}
+      <mesh position={[s * 0.32, 0.14, 0]} rotation={[0, 0, s * 0.5]} scale={[0.7, 0.5, 0.07]}>
+        <sphereGeometry args={[0.22, 7, 5]} />
+        <meshPhongMaterial color={col} transparent opacity={0.80} side={THREE.DoubleSide}
+          shininess={60} depthWrite={false} />
       </mesh>
-      {/* Orbiting particles */}
-      {Array.from({ length: particleCount }, (_, i) => (
-        <mesh
-          key={i}
-          ref={el => { particleRefs.current[i] = el; }}
-        >
-          <sphereGeometry args={[0.028, 5, 4]} />
-          <meshPhongMaterial
-            color={glowColor} transparent opacity={0.85}
-            emissive={glowColor} emissiveIntensity={1.2}
-            depthWrite={false}
-          />
-        </mesh>
-      ))}
+      {/* lower hind-wing lobe */}
+      <mesh position={[s * 0.18, -0.14, 0]} rotation={[0, 0, s * -0.22]} scale={[0.9, 0.65, 0.07]}>
+        <sphereGeometry args={[0.2, 7, 5]} />
+        <meshPhongMaterial color={col} transparent opacity={0.82} side={THREE.DoubleSide}
+          shininess={50} depthWrite={false} />
+      </mesh>
+      {/* tail curl on lower wing */}
+      <mesh position={[s * 0.28, -0.22, 0]} rotation={[0, 0, s * -0.55]} scale={[0.55, 0.38, 0.06]}>
+        <sphereGeometry args={[0.14, 6, 4]} />
+        <meshPhongMaterial color={col} transparent opacity={0.72} side={THREE.DoubleSide}
+          depthWrite={false} />
+      </mesh>
+      {/* wing spot — inner circle */}
+      <mesh position={[s * 0.24, 0.06, 0.01]} scale={[1, 0.75, 0.06]}>
+        <sphereGeometry args={[0.09, 6, 5]} />
+        <meshPhongMaterial color={spotCol} transparent opacity={0.85} side={THREE.DoubleSide}
+          emissive={spotCol} emissiveIntensity={0.6} depthWrite={false} />
+      </mesh>
+      {/* wing spot — tiny outer dot */}
+      <mesh position={[s * 0.34, 0.12, 0.01]} scale={[1, 0.75, 0.06]}>
+        <sphereGeometry args={[0.045, 5, 4]} />
+        <meshPhongMaterial color={spotCol} transparent opacity={0.7} side={THREE.DoubleSide}
+          emissive={spotCol} emissiveIntensity={0.5} depthWrite={false} />
+      </mesh>
+      {/* veins — thin dark lines on upper wing */}
+      <mesh position={[s * 0.18, 0.02, 0.005]} rotation={[0, 0, s * 0.25]} scale={[1, 0.06, 0.04]}>
+        <sphereGeometry args={[0.22, 5, 3]} />
+        <meshPhongMaterial color="#220011" transparent opacity={0.22} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
     </group>
   );
 }
 
-function PlanetRings({ count }: { count: number }) {
-  const ringConfigs = [
-    { radius: 2.15, tiltX:  0.38, tiltZ:  0.12, color: '#88ccff', glowColor: '#aaddff', speed:  0.38, particles: 6,  offset: 0.0  },
-    { radius: 2.55, tiltX: -0.22, tiltZ:  0.55, color: '#cc99ff', glowColor: '#ddbbff', speed: -0.28, particles: 8,  offset: 1.1  },
-    { radius: 2.88, tiltX:  0.60, tiltZ: -0.30, color: '#ffcc66', glowColor: '#ffe088', speed:  0.20, particles: 5,  offset: 2.3  },
-    { radius: 3.18, tiltX: -0.48, tiltZ: -0.18, color: '#66ffcc', glowColor: '#99ffdd', speed: -0.16, particles: 10, offset: 0.7  },
-    { radius: 3.52, tiltX:  0.25, tiltZ:  0.44, color: '#ff8899', glowColor: '#ffaabb', speed:  0.12, particles: 7,  offset: 3.5  },
+function Butterfly({ pos, index }: { pos:[number,number,number]; index: number }) {
+  const groupRef  = useRef<THREE.Group>(null);
+  const wingRef   = useRef<THREE.Group>(null);
+  const trailRef  = useRef<THREE.Mesh>(null);
+
+  const palettes = [
+    { wing: '#ff77bb', spot: '#ffe0f5', body: '#550033' },
+    { wing: '#66bbff', spot: '#ddf4ff', body: '#002244' },
+    { wing: '#ffcc33', spot: '#fffbcc', body: '#443300' },
+    { wing: '#88ff99', spot: '#ddffee', body: '#004422' },
+    { wing: '#cc88ff', spot: '#f0e0ff', body: '#330055' },
   ];
+  const { wing: col, spot: spotCol, body: bodyCol } = palettes[index % palettes.length];
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current || !wingRef.current) return;
+    const t = clock.elapsedTime;
+    // Orbital path — fixed radius, up-and-down bobbing movement
+    const speed  = 0.28 + index * 0.04;
+    const angle  = t * speed + (index / 5) * Math.PI * 2;
+    const r      = 2.12 + Math.sin(t * 0.55 + index * 1.7) * 0.18;
+    const yBob   = Math.sin(t * 0.9 + index * 1.4) * 0.65 + Math.sin(t * 0.3 + index) * 0.25;
+    groupRef.current.position.set(Math.cos(angle) * r, yBob, Math.sin(angle) * r);
+    // Face forward along orbit
+    groupRef.current.rotation.y = angle + Math.PI / 2;
+    // Gentle pitch following up-down motion
+    groupRef.current.rotation.x = Math.sin(t * 0.9 + index * 1.4) * 0.22;
+    // Wing flap — slowed by 50%
+    const flapSpeed = 5.5 + Math.sin(t * 0.3 + index) * 1.5;
+    const flapAmp   = 0.62 + Math.sin(t * 0.25 + index * 0.7) * 0.12;
+    wingRef.current.rotation.z = Math.sin(t * flapSpeed + index) * flapAmp;
+    // Subtle shimmer on trail
+    if (trailRef.current) {
+      (trailRef.current.material as THREE.MeshPhongMaterial).opacity =
+        0.12 + Math.sin(t * 4 + index) * 0.06;
+    }
+  });
 
   return (
-    <>
-      {ringConfigs.slice(0, count).map((cfg, i) => (
-        <OrbitRing key={i}
-          radius={cfg.radius} tiltX={cfg.tiltX} tiltZ={cfg.tiltZ}
-          color={cfg.color} glowColor={cfg.glowColor}
-          speed={cfg.speed} particleCount={cfg.particles} orbitOffset={cfg.offset}
-        />
-      ))}
-    </>
+    <group ref={groupRef} scale={0.5}>
+      {/* wing flap pivot */}
+      <group ref={wingRef}>
+        <ButterflyWing side={1}  col={col} spotCol={spotCol} />
+        <ButterflyWing side={-1} col={col} spotCol={spotCol} />
+      </group>
+
+      {/* thorax */}
+      <mesh position={[0, 0.04, 0]} rotation={[Math.PI/2, 0, 0]}>
+        <capsuleGeometry args={[0.038, 0.10, 4, 7]} />
+        <meshPhongMaterial color={bodyCol} shininess={40} />
+      </mesh>
+      {/* abdomen */}
+      <mesh position={[0, -0.10, 0]} rotation={[Math.PI/2, 0, 0]}>
+        <capsuleGeometry args={[0.028, 0.14, 4, 7]} />
+        <meshPhongMaterial color={bodyCol} shininess={20} />
+      </mesh>
+      {/* head */}
+      <mesh position={[0, 0.12, 0]}>
+        <sphereGeometry args={[0.038, 6, 5]} />
+        <meshPhongMaterial color={bodyCol} />
+      </mesh>
+      {/* eyes */}
+      <mesh position={[0.025, 0.135, 0.025]}>
+        <sphereGeometry args={[0.012, 4, 4]} />
+        <meshPhongMaterial color="#ffeeaa" emissive="#ffdd44" emissiveIntensity={0.8} />
+      </mesh>
+      <mesh position={[-0.025, 0.135, 0.025]}>
+        <sphereGeometry args={[0.012, 4, 4]} />
+        <meshPhongMaterial color="#ffeeaa" emissive="#ffdd44" emissiveIntensity={0.8} />
+      </mesh>
+      {/* antennae with ball tips */}
+      <mesh position={[0.03, 0.175, 0.01]} rotation={[0.1, 0, 0.45]}>
+        <capsuleGeometry args={[0.006, 0.12, 3, 4]} />
+        <meshPhongMaterial color={bodyCol} />
+      </mesh>
+      <mesh position={[0.07, 0.27, 0.01]}>
+        <sphereGeometry args={[0.014, 4, 4]} />
+        <meshPhongMaterial color={col} emissive={col} emissiveIntensity={0.5} />
+      </mesh>
+      <mesh position={[-0.03, 0.175, 0.01]} rotation={[0.1, 0, -0.45]}>
+        <capsuleGeometry args={[0.006, 0.12, 3, 4]} />
+        <meshPhongMaterial color={bodyCol} />
+      </mesh>
+      <mesh position={[-0.07, 0.27, 0.01]}>
+        <sphereGeometry args={[0.014, 4, 4]} />
+        <meshPhongMaterial color={col} emissive={col} emissiveIntensity={0.5} />
+      </mesh>
+      {/* pixie dust shimmer trail */}
+      <mesh ref={trailRef} position={[0, -0.08, -0.04]}>
+        <sphereGeometry args={[0.08, 5, 4]} />
+        <meshPhongMaterial color={spotCol} transparent opacity={0.14} emissive={col} emissiveIntensity={0.4} depthWrite={false} />
+      </mesh>
+    </group>
   );
 }
 
@@ -1073,6 +1129,13 @@ interface PlanetSceneProps {
 }
 
 // Fixed positions for milestone creatures/plants so they don't re-randomize
+const BUTTERFLY_POSITIONS: [number,number,number][] = [
+  [1.8,  0.3,  0.6],
+  [-1.4, 0.1,  1.6],
+  [0.6, -0.4, -1.9],
+  [-1.9, 0.5, -0.4],
+  [1.2,  0.8, -1.5],
+];
 const ANIMAL_POSITIONS: [number,number,number][] = [
   [ 0.6,  1.4,  0.7],
   [-0.8,  1.1, -0.9],
@@ -1097,12 +1160,12 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
 
   const hasAnimalMilestone    = longestStreak >= 30;
   const hasGlowPlantMilestone = longestStreak >= 100;
-  const hasRings              = longestStreak >= 30;
+  const hasButterflies        = longestStreak >= 30;
 
-  // How many rings/animals/plants to show scales with streak
-  const ringCount   = hasRings             ? Math.min(5, 1 + Math.floor((longestStreak - 30) / 20)) : 0;
-  const animalCount = hasAnimalMilestone   ? Math.min(4, 1 + Math.floor((longestStreak - 30) / 25)) : 0;
-  const glowCount   = hasGlowPlantMilestone ? Math.min(6, 1 + Math.floor((longestStreak - 100) / 15)) : 0;
+  // How many butterflies/animals/plants to show scales with streak
+  const butterflyCount = hasButterflies     ? Math.min(5, 1 + Math.floor((longestStreak - 30) / 20)) : 0;
+  const animalCount    = hasAnimalMilestone ? Math.min(4, 1 + Math.floor((longestStreak - 30) / 25)) : 0;
+  const glowCount      = hasGlowPlantMilestone ? Math.min(6, 1 + Math.floor((longestStreak - 100) / 15)) : 0;
 
   return (
     <>
@@ -1134,8 +1197,10 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
       {/* Camera pulse */}
       <CameraZoomPulse active={!!newObjectId} />
 
-      {/* 30-day milestone: Orbital rings around the planet */}
-      {ringCount > 0 && <PlanetRings count={ringCount} />}
+      {/* 30-day milestone: Butterflies orbit the planet */}
+      {Array.from({ length: butterflyCount }, (_, i) => (
+        <Butterfly key={i} pos={BUTTERFLY_POSITIONS[i]} index={i} />
+      ))}
 
       <OrbitControls
         enablePan={false}

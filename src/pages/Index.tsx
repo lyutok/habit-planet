@@ -177,6 +177,7 @@ const Index = () => {
               onAddHabit={() => setShowModal(true)}
               nextMilestone={nextMilestone}
               longestStreak={longestStreak}
+              onClearAll={() => { resetAll(); }}
             />
           </aside>
         )}

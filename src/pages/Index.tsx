@@ -317,6 +317,7 @@ const Index = () => {
                 onAddHabit={() => { setShowModal(true); setDrawerOpen(false); }}
                 nextMilestone={nextMilestone}
                 longestStreak={longestStreak}
+                onClearAll={() => { resetAll(); setDrawerOpen(false); }}
               />
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Habit, HabitEntry, PlanetObject, HabitType, HABIT_TYPE_CONFIG, ICON_TO_SUBTYPE } from '@/types/habits';
+import { Habit, HabitEntry, PlanetObject, HabitType, ObjectSubType, HABIT_TYPE_CONFIG, ICON_TO_SUBTYPE } from '@/types/habits';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -26,6 +26,13 @@ function randomColor(type: HabitType, milestone = false): string {
   if (milestone) return cfg.milestoneColor;
   const arr = cfg.colors;
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+const VALID_OBJECT_SUBTYPES = new Set<ObjectSubType>(Object.values(ICON_TO_SUBTYPE));
+
+function parseObjectSubType(value: string | null): ObjectSubType | undefined {
+  if (!value) return undefined;
+  return VALID_OBJECT_SUBTYPES.has(value as ObjectSubType) ? (value as ObjectSubType) : undefined;
 }
 
 function load<T>(key: string, fallback: T): T {
@@ -64,6 +71,8 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
 
       // Load from DB for authenticated users
       const userId = getCurrentUserId();
+      if (!userId) return; // Safety check
+
       try {
         const [habitsRes, entriesRes, objectsRes] = await Promise.all([
           supabase.from('habits').select('*').eq('user_id', userId),
@@ -93,7 +102,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
         const dbObjects = objectsRes.data.map(o => ({
           id: o.id,
           type: o.type as HabitType,
-          subType: o.sub_type as string | undefined,
+          subType: parseObjectSubType(o.sub_type),
           position: [o.position_x, o.position_y, o.position_z] as [number, number, number],
           scale: o.scale,
           color: o.color,
@@ -130,6 +139,8 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
 
   const addHabit = useCallback(async (name: string, type: HabitType, icon: string) => {
     const userId = getCurrentUserId();
+    if (!userId) return; // Safety check
+
     const newHabit = {
       id: uid(),
       name,
@@ -168,6 +179,8 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
 
     const t = todayFn();
     const userId = getCurrentUserId();
+    if (!userId) return; // Safety check
+
     const newEntry = { habitId, date: t, completed: true };
 
     if (isAnonymous) {
@@ -241,11 +254,13 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
   const resetAll = useCallback(async () => {
     if (!isAnonymous) {
       const userId = getCurrentUserId();
-      await Promise.all([
-        supabase.from('habits').delete().eq('user_id', userId),
-        supabase.from('habit_entries').delete().eq('user_id', userId),
-        supabase.from('planet_objects').delete().eq('user_id', userId),
-      ]);
+      if (userId) {
+        await Promise.all([
+          supabase.from('habits').delete().eq('user_id', userId),
+          supabase.from('habit_entries').delete().eq('user_id', userId),
+          supabase.from('planet_objects').delete().eq('user_id', userId),
+        ]);
+      }
     }
     setHabits([]);
     setEntries([]);

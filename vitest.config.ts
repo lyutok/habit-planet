@@ -7,6 +7,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    api: {
+      host: "127.0.0.1",
+    },
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },

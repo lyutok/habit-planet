@@ -10,6 +10,17 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 function LoadingPlanet() {
   return (
@@ -28,8 +39,13 @@ const Index = () => {
   const isMobile = useIsMobile();
   const isDev = import.meta.env.DEV;
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authPending, setAuthPending] = useState(false);
 
-  const { user, isAnonymous, signIn } = useAuth();
+  const { user, isAnonymous, signIn, signUp, signOut } = useAuth();
 
   const {
     habits,
@@ -70,6 +86,64 @@ const Index = () => {
   const nextMilestone = MILESTONES.find(m => longestStreak < m.streak);
   const prevMilestone = [...MILESTONES].reverse().find(m => longestStreak >= m.streak);
 
+  const clearAuthForm = () => {
+    setEmail('');
+    setPassword('');
+    setAuthError(null);
+  };
+
+  const getReadableAuthError = (error: unknown, fallback: string) => {
+    const message = error instanceof Error ? error.message : fallback;
+    const normalized = message.toLowerCase();
+
+    if (normalized.includes('email rate limit exceeded')) {
+      return 'Too many email attempts. Please wait a minute and try again.';
+    }
+
+    return message;
+  };
+
+  const handleSignIn = async () => {
+    setAuthPending(true);
+    setAuthError(null);
+    try {
+      await signIn(email.trim(), password);
+      clearAuthForm();
+      setAuthOpen(false);
+    } catch (error) {
+      setAuthError(getReadableAuthError(error, 'Unable to sign in.'));
+    } finally {
+      setAuthPending(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    setAuthPending(true);
+    setAuthError(null);
+    try {
+      await signUp(email.trim(), password);
+      clearAuthForm();
+      setAuthOpen(false);
+    } catch (error) {
+      setAuthError(getReadableAuthError(error, 'Unable to sign up.'));
+    } finally {
+      setAuthPending(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setAuthPending(true);
+    setAuthError(null);
+    try {
+      await signOut();
+      clearAuthForm();
+    } catch (error) {
+      setAuthError(getReadableAuthError(error, 'Unable to sign out.'));
+    } finally {
+      setAuthPending(false);
+    }
+  };
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Top Bar */}
@@ -89,6 +163,87 @@ const Index = () => {
 
         {/* Stats + Clear button row */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          <Dialog
+            open={authOpen}
+            onOpenChange={(open) => {
+              setAuthOpen(open);
+              if (!open) clearAuthForm();
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 px-2 text-xs sm:h-9 sm:px-3">
+                {isAnonymous ? 'Login' : 'Account'}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{isAnonymous ? 'Login to Habit Planet' : 'Account'}</DialogTitle>
+                <DialogDescription>
+                  {isAnonymous
+                    ? 'Sign in to save your planet in the cloud.'
+                    : 'You are signed in and syncing your progress.'}
+                </DialogDescription>
+              </DialogHeader>
+
+              {isAnonymous ? (
+                <div className="space-y-3">
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                    autoComplete="email"
+                    disabled={authPending}
+                  />
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    autoComplete="current-password"
+                    disabled={authPending}
+                  />
+                  {authError && (
+                    <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                      {authError}
+                    </p>
+                  )}
+                  <DialogFooter className="gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleSignUp}
+                      disabled={authPending || !email.trim() || password.length < 6}
+                    >
+                      {authPending ? 'Working...' : 'Sign up'}
+                    </Button>
+                    <Button
+                      onClick={handleSignIn}
+                      disabled={authPending || !email.trim() || password.length < 6}
+                    >
+                      {authPending ? 'Working...' : 'Sign in'}
+                    </Button>
+                  </DialogFooter>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+                    Signed in as <span className="font-semibold">{user?.email ?? 'unknown user'}</span>
+                  </div>
+                  {authError && (
+                    <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                      {authError}
+                    </p>
+                  )}
+                  <DialogFooter>
+                    <Button variant="destructive" onClick={handleSignOut} disabled={authPending}>
+                      {authPending ? 'Signing out...' : 'Sign out'}
+                    </Button>
+                  </DialogFooter>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
           {/* Today */}
           <div className="stat-chip">
             <Sparkles size={12} className="text-primary" />

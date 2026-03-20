@@ -20,7 +20,7 @@ const TYPE_GRADIENTS: Record<HabitType, string> = {
   tree:     'from-green-500/20 to-emerald-500/10 border-green-500/30',
   flower:   'from-pink-500/20 to-fuchsia-500/10 border-pink-500/30',
   mountain: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30',
-  building: 'from-violet-500/20 to-indigo-500/10 border-violet-500/30',
+  building: 'from-green-500/20 to-emerald-500/10 border-green-500/30',
 };
 
 export function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {

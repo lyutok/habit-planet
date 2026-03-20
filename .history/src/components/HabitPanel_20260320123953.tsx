@@ -4,7 +4,6 @@ import { HABIT_TYPE_CONFIG } from '@/types/habits';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Flame, CheckCircle, Trophy } from 'lucide-react';
 import { Milestone } from '@/types/habits';
-import { useAuth } from '@/hooks/useAuth';
 
 interface HabitPanelProps {
   habits: Habit[];
@@ -36,8 +35,6 @@ export function HabitPanel({
     onComplete(id);
     setTimeout(() => setCompletingId(null), 900);
   };
-
-  const { user, isAnonymous, signIn } = useAuth();
 
   return (
     <div className="flex h-full flex-col gap-3">

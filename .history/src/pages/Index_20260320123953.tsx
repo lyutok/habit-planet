@@ -9,7 +9,6 @@ import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
-import { useAuth } from '@/hooks/useAuth';
 
 function LoadingPlanet() {
   return (
@@ -28,8 +27,6 @@ const Index = () => {
   const isMobile = useIsMobile();
   const isDev = import.meta.env.DEV;
   const [drawerOpen, setDrawerOpen] = useState(false);
-
-  const { user, isAnonymous, signIn } = useAuth();
 
   const {
     habits,

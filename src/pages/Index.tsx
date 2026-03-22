@@ -107,7 +107,13 @@ const Index = () => {
     setAuthPending(true);
     setAuthError(null);
     try {
-      await signIn(email.trim(), password);
+      const timeoutMs = 15_000;
+      await Promise.race([
+        signIn(email.trim(), password),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Sign in timed out. Check your connection and try again.')), timeoutMs)
+        ),
+      ]);
       clearAuthForm();
       setAuthOpen(false);
     } catch (error) {

@@ -15,17 +15,19 @@ export interface AuthState {
 
 async function fetchUserRole(userId: string): Promise<UserRole> {
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .maybeSingle();
-    if (error) {
-      console.warn('[Auth] profiles fetch failed:', error.message);
-      return 'user';
-    }
-    if (!data?.role) return 'user';
-    return (data.role === 'admin' ? 'admin' : 'user') as UserRole;
+    const rolePromise = (async (): Promise<UserRole> => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) return 'user';
+      return (data?.role === 'admin' ? 'admin' : 'user') as UserRole;
+    })();
+    const timeoutPromise = new Promise<UserRole>((resolve) =>
+      setTimeout(() => resolve('user'), 10_000)
+    );
+    return await Promise.race([rolePromise, timeoutPromise]);
   } catch (e) {
     console.warn('[Auth] profiles fetch error:', e);
     return 'user';
@@ -44,22 +46,34 @@ export function useAuth() {
 
   useEffect(() => {
     const updateState = async (session: Session | null) => {
-      const user = session?.user ?? null;
-      const isAnonymous = !session;
-      let role: UserRole | null = null;
-      let isAdmin = false;
-      if (user) {
-        role = await fetchUserRole(user.id);
-        isAdmin = role === 'admin';
+      try {
+        const user = session?.user ?? null;
+        const isAnonymous = !session;
+        let role: UserRole | null = null;
+        let isAdmin = false;
+        if (user) {
+          role = await fetchUserRole(user.id);
+          isAdmin = role === 'admin';
+        }
+        setAuthState({
+          user,
+          session,
+          loading: false,
+          isAnonymous,
+          role,
+          isAdmin,
+        });
+      } catch (e) {
+        console.warn('[Auth] updateState error:', e);
+        setAuthState({
+          user: session?.user ?? null,
+          session,
+          loading: false,
+          isAnonymous: !session,
+          role: null,
+          isAdmin: false,
+        });
       }
-      setAuthState({
-        user,
-        session,
-        loading: false,
-        isAnonymous,
-        role,
-        isAdmin,
-      });
     };
 
     supabase.auth.getSession().then(({ data: { session } }) => updateState(session));

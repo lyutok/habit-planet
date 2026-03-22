@@ -171,7 +171,7 @@ const Index = () => {
             }}
           >
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 px-2 text-xs sm:h-9 sm:px-3">
+              <Button variant="default" size="sm" className="h-8 px-2 text-xs sm:h-9 sm:px-3 glow-green">
                 {isAnonymous ? 'Login' : 'Account'}
               </Button>
             </DialogTrigger>

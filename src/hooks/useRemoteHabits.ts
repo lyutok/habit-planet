@@ -114,7 +114,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
         setEntries(dbEntries);
         setPlanetObjects(dbObjects);
       } catch (error) {
-        console.error('Error loading from DB:', error);
+        console.error('[RemoteHabits] Error loading from DB:', error);
         // Fallback to localStorage
         setHabits(load(HABITS_KEY, []));
         setEntries(load(ENTRIES_KEY, []));

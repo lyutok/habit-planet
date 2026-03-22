@@ -2,11 +2,34 @@ import { useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+export type UserRole = 'user' | 'admin';
+
 export interface AuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
   isAnonymous: boolean;
+  role: UserRole | null;
+  isAdmin: boolean;
+}
+
+async function fetchUserRole(userId: string): Promise<UserRole> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle();
+    if (error) {
+      console.warn('[Auth] profiles fetch failed:', error.message);
+      return 'user';
+    }
+    if (!data?.role) return 'user';
+    return (data.role === 'admin' ? 'admin' : 'user') as UserRole;
+  } catch (e) {
+    console.warn('[Auth] profiles fetch error:', e);
+    return 'user';
+  }
 }
 
 export function useAuth() {
@@ -14,30 +37,35 @@ export function useAuth() {
     user: null,
     session: null,
     loading: true,
-    isAnonymous: true, // Start as anonymous
+    isAnonymous: true,
+    role: null,
+    isAdmin: false,
   });
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const updateState = async (session: Session | null) => {
+      const user = session?.user ?? null;
+      const isAnonymous = !session;
+      let role: UserRole | null = null;
+      let isAdmin = false;
+      if (user) {
+        role = await fetchUserRole(user.id);
+        isAdmin = role === 'admin';
+      }
       setAuthState({
-        user: session?.user ?? null,
+        user,
         session,
         loading: false,
-        isAnonymous: !session,
+        isAnonymous,
+        role,
+        isAdmin,
       });
-    });
+    };
 
-    // Listen for auth changes
+    supabase.auth.getSession().then(({ data: { session } }) => updateState(session));
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setAuthState({
-          user: session?.user ?? null,
-          session,
-          loading: false,
-          isAnonymous: !session,
-        });
-      }
+      async (_event, session) => { await updateState(session); }
     );
 
     return () => subscription.unsubscribe();

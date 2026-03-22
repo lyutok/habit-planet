@@ -45,7 +45,7 @@ const Index = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authPending, setAuthPending] = useState(false);
 
-  const { user, isAnonymous, signIn, signUp, signOut } = useAuth();
+  const { user, isAnonymous, signIn, signUp, signOut, isAdmin } = useAuth();
 
   const {
     habits,
@@ -490,8 +490,8 @@ const Index = () => {
         />
       )}
 
-      {/* Dev Panel — only in development builds */}
-      {isDev && (
+      {/* Dev Panel — in development builds or for admin users */}
+      {(isDev || isAdmin) && (
         <>
           <div
             className={`fixed bottom-20 right-5 z-50 transition-all duration-300 sm:bottom-5 ${

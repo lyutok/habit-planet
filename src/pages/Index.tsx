@@ -171,8 +171,16 @@ const Index = () => {
             }}
           >
             <DialogTrigger asChild>
-              <Button variant="default" size="sm" className="h-8 px-2 text-xs sm:h-9 sm:px-3 glow-green">
-                {isAnonymous ? 'Login' : 'Account'}
+              <Button
+                variant="ghost"
+                size="sm"
+                className={
+                  isAnonymous
+                    ? 'h-8 px-2 text-xs sm:h-9 sm:px-3 glow-green bg-primary text-primary-foreground hover:bg-primary/90 border-0'
+                    : 'h-8 px-2 text-xs sm:h-9 sm:px-3 border border-primary/30 bg-primary/10 text-primary font-bold hover:bg-primary/20'
+                }
+              >
+                {isAnonymous ? 'Login' : 'Log Out'}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">

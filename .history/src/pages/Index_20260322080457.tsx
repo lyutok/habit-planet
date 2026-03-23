@@ -508,7 +508,6 @@ const Index = () => {
         <AddHabitModal
           onClose={() => setShowModal(false)}
           onAdd={addHabit}
-          disabled={loading}
         />
       )}
 

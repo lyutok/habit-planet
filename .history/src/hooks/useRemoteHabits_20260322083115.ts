@@ -198,13 +198,10 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
         return;
       }
     console.log('[addHabit] About to insert with user_id:', userIdToUse, 'type:', typeof userIdToUse);
-    const { error, data } = await supabase.from('habits').insert({
-      id: newHabit.id,
-      user_id: userIdToUse,
-      name,
-      icon,
-      type,
-    });
+          name,
+          icon,
+          type,
+        });
 
         if (error) {
           console.error('[addHabit] DB insertion error:', error);

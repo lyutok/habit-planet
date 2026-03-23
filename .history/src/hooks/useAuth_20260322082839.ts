@@ -57,14 +57,13 @@ export function useAuth() {
         isAdmin = role === 'admin';
       }
       console.log('[useAuth] Setting auth state:', { user: user?.id, isAnonymous, role, isAdmin });
-      setAuthState({
-        user,
-        session,
-        loading: false,
-        isAnonymous,
-        role,
-        isAdmin,
-      });
+          user,
+          session,
+          loading: false,
+          isAnonymous,
+          role,
+          isAdmin,
+        });
       } catch (e) {
         console.warn('[Auth] updateState error:', e);
         setAuthState({

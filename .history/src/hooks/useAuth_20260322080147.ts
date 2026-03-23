@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -46,25 +46,23 @@ export function useAuth() {
 
   useEffect(() => {
     const updateState = async (session: Session | null) => {
-    console.log('[useAuth] updateState called with session:', session?.user?.id);
-    try {
-      const user = session?.user ?? null;
-      const isAnonymous = !session;
-      let role: UserRole | null = null;
-      let isAdmin = false;
-      if (user) {
-        role = await fetchUserRole(user.id);
-        isAdmin = role === 'admin';
-      }
-      console.log('[useAuth] Setting auth state:', { user: user?.id, isAnonymous, role, isAdmin });
-      setAuthState({
-        user,
-        session,
-        loading: false,
-        isAnonymous,
-        role,
-        isAdmin,
-      });
+      try {
+        const user = session?.user ?? null;
+        const isAnonymous = !session;
+        let role: UserRole | null = null;
+        let isAdmin = false;
+        if (user) {
+          role = await fetchUserRole(user.id);
+          isAdmin = role === 'admin';
+        }
+        setAuthState({
+          user,
+          session,
+          loading: false,
+          isAnonymous,
+          role,
+          isAdmin,
+        });
       } catch (e) {
         console.warn('[Auth] updateState error:', e);
         setAuthState({
@@ -78,16 +76,10 @@ export function useAuth() {
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[useAuth] Initial session loaded:', session?.user?.id);
-      updateState(session);
-    });
+    supabase.auth.getSession().then(({ data: { session } }) => updateState(session));
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log('[useAuth] Auth state change event:', _event, 'session user:', session?.user?.id);
-        await updateState(session);
-      }
+      async (_event, session) => { await updateState(session); }
     );
 
     return () => subscription.unsubscribe();

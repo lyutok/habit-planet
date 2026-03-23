@@ -109,7 +109,6 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
           streak: h.streak || 0,
           createdAt: h.created_at,
         }));
-        console.log('[RemoteHabits] Loaded habits from DB:', dbHabits);
 
         const dbEntries = entriesRes.data.map(e => ({
           habitId: e.habit_id,
@@ -143,7 +142,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     };
 
     loadFromDB();
-  }, [user?.id, isAnonymous, getCurrentUserId]);
+  }, [user, isAnonymous, getCurrentUserId]);
 
   // Save to localStorage for anonymous users
   useEffect(() => { if (isAnonymous) localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }, [habits, isAnonymous]);
@@ -156,21 +155,13 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
   }, [entries, todayFn]);
 
   const addHabit = useCallback(async (name: string, type: HabitType, icon: string) => {
-    console.log('[addHabit] Starting addHabit function');
+    console.log('[addHabit] Called with:', { name, type, icon });
     const userId = getCurrentUserId();
-    console.log('[addHabit] Current auth state:', { userId, isAnonymous, user: user?.id });
-
-    // Check if we have a valid session even if isAnonymous is true
-    const { data: { session } } = await supabase.auth.getSession();
-    const hasValidSession = !!session && !!session.user && !!session.user.id;
-    console.log('[addHabit] Session check:', { hasValidSession, sessionExists: !!session, userExists: !!session?.user, userIdExists: !!session?.user?.id });
-    console.log('[addHabit] Session user ID:', session?.user?.id);
-    console.log('[addHabit] Current auth state:', { isAnonymous, user: user ? { id: user.id, email: user.email } : null });
-    console.log('[addHabit] Auth state user ID:', user?.id);
-
-    // Also check getUser() to see if there's a difference
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    console.log('[addHabit] getUser() result:', currentUser ? { id: currentUser.id, email: currentUser.email } : null);
+    console.log('[addHabit] userId:', userId, 'isAnonymous:', isAnonymous);
+    if (!userId) {
+      console.log('[addHabit] No userId, returning');
+      return; // Safety check
+    }
 
     const newHabit = {
       id: uid(),
@@ -180,51 +171,28 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
       streak: 0,
       createdAt: new Date().toISOString(),
     };
+    console.log('[addHabit] Created new habit:', newHabit);
 
-    if (hasValidSession) {
-      // User has a valid session, save to DB
-      console.log('[addHabit] User has valid session, saving to DB');
-      const sessionUserId = session?.user?.id;
-      const authUserId = getCurrentUserId();
-      console.log('[addHabit] Session user ID:', sessionUserId, 'Auth user ID:', authUserId);
-      console.log('[addHabit] Session user ID type:', typeof sessionUserId, 'Auth user ID type:', typeof authUserId);
-      
-      // Use getUser() user ID if available, otherwise session user ID, otherwise auth user ID
-      const userIdToUse = currentUser?.id || sessionUserId || authUserId;
-      console.log('[addHabit] Using user ID:', userIdToUse);
-      
-      if (!userIdToUse) {
-        console.log('[addHabit] No user ID available, skipping');
-        return;
-      }
-    console.log('[addHabit] About to insert with user_id:', userIdToUse, 'type:', typeof userIdToUse);
-    const { error, data } = await supabase.from('habits').insert({
-      id: newHabit.id,
-      user_id: userIdToUse,
-      name,
-      icon,
-      type,
-    });
-
-        if (error) {
-          console.error('[addHabit] DB insertion error:', error);
-          throw error;
-        }
-
-        console.log('[addHabit] DB insertion successful:', data);
-        setHabits(prev => [...prev, newHabit]);
-        console.log('[addHabit] Local state updated');
-      } catch (err) {
-        console.error('[addHabit] Exception during DB insertion:', err);
-        // Still update local state for now, but log the error
-        setHabits(prev => [...prev, newHabit]);
-      }
+    if (isAnonymous) {
+      console.log('[addHabit] Adding to local state');
+      setHabits(prev => [...prev, newHabit]);
     } else {
-      // No valid session, save locally
-      console.log('[addHabit] No valid session, saving locally');
+      console.log('[addHabit] Adding to DB');
+      const { error } = await supabase.from('habits').insert({
+        id: newHabit.id,
+        user_id: userId,
+        name,
+        icon,
+        type,
+      });
+      if (error) {
+        console.error('[addHabit] DB error:', error);
+        throw error;
+      }
       setHabits(prev => [...prev, newHabit]);
     }
-  }, [user]);
+    console.log('[addHabit] Habit added successfully');
+  }, [isAnonymous, getCurrentUserId]);
 
   const deleteHabit = useCallback(async (habitId: string) => {
     if (!isAnonymous) {
@@ -239,7 +207,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     if (isCompletedToday(habitId)) return;
 
     const t = todayFn();
-    const userId = userId; // Use the userId from useAuth
+    const userId = getCurrentUserId();
     if (!userId) return; // Safety check
 
     const newEntry = { habitId, date: t, completed: true };
@@ -310,7 +278,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     setSparklePos(pos);
     setTimeout(() => setNewObjectId(null), 2000);
     setTimeout(() => setSparklePos(null), 2000);
-  }, [habits, isCompletedToday, todayFn, isAnonymous, getCurrentUserId, userId]);
+  }, [habits, isCompletedToday, todayFn, isAnonymous, getCurrentUserId]);
 
   const resetAll = useCallback(async () => {
     if (!isAnonymous) {

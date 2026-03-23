@@ -49,11 +49,9 @@ const Index = () => {
 
   const {
     habits,
-    entries,
     planetObjects,
     newObjectId,
     sparklePos,
-    loading,
     addHabit,
     deleteHabit,
     completeHabit,
@@ -64,7 +62,7 @@ const Index = () => {
     getTodayCount,
     simulateStreak,
     resetAll,
-  } = useRemoteHabits({ getToday });
+  } = useHabits({ getToday });
 
   const [showModal, setShowModal] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -143,11 +141,6 @@ const Index = () => {
     setAuthPending(true);
     setAuthError(null);
     try {
-      // Save current data to last viewed cache before signing out
-      localStorage.setItem('habitplanet_last_viewed_habits', JSON.stringify(habits));
-      localStorage.setItem('habitplanet_last_viewed_entries', JSON.stringify(entries));
-      localStorage.setItem('habitplanet_last_viewed_objects', JSON.stringify(planetObjects));
-      
       await signOut();
       clearAuthForm();
     } catch (error) {
@@ -508,7 +501,6 @@ const Index = () => {
         <AddHabitModal
           onClose={() => setShowModal(false)}
           onAdd={addHabit}
-          disabled={loading}
         />
       )}
 

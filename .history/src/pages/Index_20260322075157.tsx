@@ -53,7 +53,6 @@ const Index = () => {
     planetObjects,
     newObjectId,
     sparklePos,
-    loading,
     addHabit,
     deleteHabit,
     completeHabit,
@@ -508,7 +507,6 @@ const Index = () => {
         <AddHabitModal
           onClose={() => setShowModal(false)}
           onAdd={addHabit}
-          disabled={loading}
         />
       )}
 

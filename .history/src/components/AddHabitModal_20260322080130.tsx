@@ -7,7 +7,6 @@ import { X } from 'lucide-react';
 interface AddHabitModalProps {
   onClose: () => void;
   onAdd: (name: string, type: HabitType, icon: string) => void;
-  disabled?: boolean;
 }
 
 const PRESET_ICONS: Record<HabitType, string[]> = {
@@ -24,7 +23,7 @@ const TYPE_GRADIENTS: Record<HabitType, string> = {
   building: 'from-green-500/20 to-emerald-500/10 border-green-500/30',
 };
 
-export function AddHabitModal({ onClose, onAdd, disabled = false }: AddHabitModalProps) {
+export function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
   const [name, setName] = useState('');
   const [type, setType] = useState<HabitType>('tree');
   const [icon, setIcon] = useState('📚');
@@ -130,7 +129,7 @@ export function AddHabitModal({ onClose, onAdd, disabled = false }: AddHabitModa
         {/* Submit */}
         <Button
           onClick={handleSubmit}
-          disabled={!name.trim() || disabled}
+          disabled={!name.trim()}
           className="w-full rounded-2xl bg-primary py-3 font-black text-primary-foreground hover:bg-primary/90 disabled:opacity-40 glow-green transition-all hover:scale-[1.02] active:scale-[0.98] text-base"
         >
           🌱 Plant Habit

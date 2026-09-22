@@ -83,7 +83,7 @@ export function HabitPanel({
             return (
               <div
                 key={habit.id}
-                className={`habit-card first:mt-[5px] rounded-2xl p-3 transition-all duration-300 ${
+                className={`habit-card rounded-2xl p-3 transition-all duration-300 ${
                   isCompleting ? 'completed-pulse' : ''
                 } ${completed ? 'border-primary/30 bg-primary/5' : ''}`}
               >

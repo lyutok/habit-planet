@@ -37,13 +37,7 @@ export function HabitPanel({
     try {
       await onComplete(id);
     } catch (error) {
-      const databaseError = error as { message?: string; details?: string; hint?: string; code?: string };
-      const message = [
-        databaseError.message,
-        databaseError.details,
-        databaseError.hint,
-        databaseError.code ? `Code: ${databaseError.code}` : undefined,
-      ].filter(Boolean).join(' | ') || 'Unable to complete this habit.';
+      const message = error instanceof Error ? error.message : 'Unable to complete this habit.';
       toast.error('Could not complete habit', { description: message });
     } finally {
       setCompletingId(null);
@@ -83,7 +77,7 @@ export function HabitPanel({
             return (
               <div
                 key={habit.id}
-                className={`habit-card first:mt-[5px] rounded-2xl p-3 transition-all duration-300 ${
+                className={`habit-card rounded-2xl p-3 transition-all duration-300 ${
                   isCompleting ? 'completed-pulse' : ''
                 } ${completed ? 'border-primary/30 bg-primary/5' : ''}`}
               >

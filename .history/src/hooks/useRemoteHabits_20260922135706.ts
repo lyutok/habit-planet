@@ -13,7 +13,7 @@ const LAST_VIEWED_ENTRIES_KEY = 'habitplanet_last_viewed_entries';
 const LAST_VIEWED_PLANET_KEY = 'habitplanet_last_viewed_objects';
 
 function uid() {
-  return crypto.randomUUID();
+  return Math.random().toString(36).substring(2, 11);
 }
 
 function surfacePoint(radius = 1.6): [number, number, number] {
@@ -283,6 +283,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
       const { error } = await supabase.from('planet_objects').insert({
         id: objId,
         user_id: currentUserId,
+        habit_id: habitId,
         type: habit.type,
         sub_type: newObj.subType,
         position_x: pos[0],

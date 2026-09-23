@@ -402,6 +402,20 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     localStorage.removeItem(PLANET_KEY);
   }, [isAnonymous, getCurrentUserId]);
 
+  const clearLocalData = useCallback(() => {
+    setHabits([]);
+    setEntries([]);
+    setPlanetObjects([]);
+    setNewObjectId(null);
+    setSparklePos(null);
+    localStorage.removeItem(HABITS_KEY);
+    localStorage.removeItem(ENTRIES_KEY);
+    localStorage.removeItem(PLANET_KEY);
+    localStorage.removeItem(LAST_VIEWED_HABITS_KEY);
+    localStorage.removeItem(LAST_VIEWED_ENTRIES_KEY);
+    localStorage.removeItem(LAST_VIEWED_PLANET_KEY);
+  }, []);
+
   const simulateStreak = useCallback(async (days: number) => {
     if (habits.length === 0) return;
 
@@ -529,5 +543,6 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     getTodayCount,
     simulateStreak,
     resetAll,
+    clearLocalData,
   };
 }

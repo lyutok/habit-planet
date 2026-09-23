@@ -84,6 +84,7 @@ const Index = () => {
     getTodayCount,
     simulateStreak,
     resetAll,
+    clearLocalData,
   } = useRemoteHabits({ getToday: effectiveToday });
 
   const [showModal, setShowModal] = useState(false);
@@ -167,11 +168,7 @@ const Index = () => {
     setAuthPending(true);
     setAuthError(null);
     try {
-      // Save current data to last viewed cache before signing out
-      localStorage.setItem('habitplanet_last_viewed_habits', JSON.stringify(habits));
-      localStorage.setItem('habitplanet_last_viewed_entries', JSON.stringify(entries));
-      localStorage.setItem('habitplanet_last_viewed_objects', JSON.stringify(planetObjects));
-      
+      clearLocalData();
       await signOut();
       setAuthOpen(false);
       clearAuthForm();

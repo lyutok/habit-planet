@@ -98,6 +98,8 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
       return;
     }
 
+    let active = true;
+
     const loadFromDB = async () => {
       if (isAnonymous) {
         // For anonymous users, prefer last viewed data (from logout), otherwise regular data
@@ -105,6 +107,8 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
         const lastViewedEntries = load(LAST_VIEWED_ENTRIES_KEY, null);
         const lastViewedObjects = load(LAST_VIEWED_PLANET_KEY, null);
         
+        if (!active) return;
+
         if (lastViewedHabits !== null) {
           // User just logged out, show their last viewed data
           setHabits(lastViewedHabits);
@@ -123,7 +127,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
       // Load from DB for authenticated users
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id ?? user?.id;
-      if (!userId) return; // Safety check
+      if (!active || !userId) return; // Safety check
 
       try {
         const [habitsRes, entriesRes, objectsRes] = await Promise.all([
@@ -163,18 +167,20 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
           milestone: o.milestone,
         }));
 
-        if (!syncingSimulation.current) {
+        if (active && !syncingSimulation.current) {
           setHabits(dbHabits);
           setEntries(dbEntries);
           setPlanetObjects(dbObjects);
         }
       } catch (error) {
         console.error('[RemoteHabits] Error loading from DB:', error);
-        setHabits([]);
-        setEntries([]);
-        setPlanetObjects([]);
+        if (active) {
+          setHabits([]);
+          setEntries([]);
+          setPlanetObjects([]);
+        }
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
@@ -191,6 +197,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     document.addEventListener('visibilitychange', refreshOnReturn);
 
     return () => {
+      active = false;
       window.clearInterval(refreshInterval);
       window.removeEventListener('focus', refreshOnReturn);
       document.removeEventListener('visibilitychange', refreshOnReturn);

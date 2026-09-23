@@ -37,6 +37,7 @@ export interface HabitEntry {
 
 export interface PlanetObject {
   id: string;
+  habitId?: string;
   type: HabitType;
   subType?: ObjectSubType;
   position: [number, number, number];

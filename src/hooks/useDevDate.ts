@@ -10,6 +10,7 @@ function loadOffset(): number {
 
 export function useDevDate() {
   const [dayOffset, setDayOffset] = useState<number>(loadOffset);
+  const [databaseDate, setDatabaseDate] = useState<string | null>(null);
 
   const advanceDay = useCallback(() => {
     setDayOffset(prev => {
@@ -34,10 +35,10 @@ export function useDevDate() {
 
   /** Returns today's date string offset by dayOffset days */
   const getToday = useCallback((): string => {
-    const d = new Date();
+    const d = new Date(databaseDate ?? new Date().toISOString().split('T')[0]);
     d.setDate(d.getDate() + dayOffset);
     return d.toISOString().split('T')[0];
-  }, [dayOffset]);
+  }, [databaseDate, dayOffset]);
 
-  return { dayOffset, advanceDay, resetOffset, getToday, jumpDays };
+  return { dayOffset, advanceDay, resetOffset, getToday, jumpDays, databaseDate, setDatabaseDate };
 }

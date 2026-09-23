@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Habit, HabitEntry, PlanetObject, HabitType, ObjectSubType, HABIT_TYPE_CONFIG, ICON_TO_SUBTYPE } from '@/types/habits';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -47,13 +47,41 @@ function load<T>(key: string, fallback: T): T {
   } catch { return fallback; }
 }
 
+function previousDate(date: string): string {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() - 1);
+  return value.toISOString().split('T')[0];
+}
+
+function addDays(date: string, days: number): string {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().split('T')[0];
+}
+
+function calculateStreak(habitId: string, entries: HabitEntry[], today: string): number {
+  const completedDates = new Set(
+    entries
+      .filter(entry => entry.habitId === habitId && entry.completed)
+      .map(entry => entry.date),
+  );
+  let streak = 0;
+  let date = today;
+  while (completedDates.has(date)) {
+    streak += 1;
+    date = previousDate(date);
+  }
+  return streak;
+}
+
 interface UseRemoteHabitsOptions {
   getToday?: () => string;
 }
 
 export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
-  const { user, isAnonymous, getCurrentUserId } = useAuth();
+  const { user, isAnonymous, loading: authLoading, getCurrentUserId } = useAuth();
   const todayFn = useCallback(() => getToday ? getToday() : new Date().toISOString().split('T')[0], [getToday]);
+  const currentDate = todayFn();
 
   const [habits, setHabits] = useState<Habit[]>(() => load(HABITS_KEY, []));
   const [entries, setEntries] = useState<HabitEntry[]>(() => load(ENTRIES_KEY, []));
@@ -61,9 +89,15 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
   const [newObjectId, setNewObjectId] = useState<string | null>(null);
   const [sparklePos, setSparklePos] = useState<[number, number, number] | null>(null);
   const [loading, setLoading] = useState(true);
+  const syncingSimulation = useRef(false);
 
   // Load data from Supabase on auth change
   useEffect(() => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+
     const loadFromDB = async () => {
       if (isAnonymous) {
         // For anonymous users, prefer last viewed data (from logout), otherwise regular data
@@ -87,7 +121,8 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
       }
 
       // Load from DB for authenticated users
-      const userId = getCurrentUserId();
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id ?? user?.id;
       if (!userId) return; // Safety check
 
       try {
@@ -101,24 +136,24 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
         if (entriesRes.error) throw entriesRes.error;
         if (objectsRes.error) throw objectsRes.error;
 
-        const dbHabits = habitsRes.data.map(h => ({
-          id: h.id,
-          name: h.name,
-          icon: h.icon,
-          type: h.type as HabitType,
-          streak: h.streak || 0,
-          createdAt: h.created_at,
-        }));
-        console.log('[RemoteHabits] Loaded habits from DB:', dbHabits);
-
         const dbEntries = entriesRes.data.map(e => ({
           habitId: e.habit_id,
           date: e.date,
           completed: e.completed,
         }));
 
+        const dbHabits = habitsRes.data.map(h => ({
+          id: h.id,
+          name: h.name,
+          icon: h.icon,
+          type: h.type as HabitType,
+          streak: calculateStreak(h.id, dbEntries, currentDate),
+          createdAt: h.created_at,
+        }));
+
         const dbObjects = objectsRes.data.map(o => ({
           id: o.id,
+          habitId: o.habit_id ?? undefined,
           type: o.type as HabitType,
           subType: parseObjectSubType(o.sub_type),
           position: [o.position_x, o.position_y, o.position_z] as [number, number, number],
@@ -128,32 +163,57 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
           milestone: o.milestone,
         }));
 
-        setHabits(dbHabits);
-        setEntries(dbEntries);
-        setPlanetObjects(dbObjects);
+        if (!syncingSimulation.current) {
+          setHabits(dbHabits);
+          setEntries(dbEntries);
+          setPlanetObjects(dbObjects);
+        }
       } catch (error) {
         console.error('[RemoteHabits] Error loading from DB:', error);
-        // Fallback to localStorage
-        setHabits(load(HABITS_KEY, []));
-        setEntries(load(ENTRIES_KEY, []));
-        setPlanetObjects(load(PLANET_KEY, []));
+        setHabits([]);
+        setEntries([]);
+        setPlanetObjects([]);
       } finally {
         setLoading(false);
       }
     };
 
     loadFromDB();
-  }, [user?.id, isAnonymous, getCurrentUserId]);
+
+    if (isAnonymous) return;
+
+    const refreshOnReturn = () => {
+      if (document.visibilityState === 'visible') void loadFromDB();
+    };
+    const refreshInterval = window.setInterval(() => void loadFromDB(), 5000);
+
+    window.addEventListener('focus', refreshOnReturn);
+    document.addEventListener('visibilitychange', refreshOnReturn);
+
+    return () => {
+      window.clearInterval(refreshInterval);
+      window.removeEventListener('focus', refreshOnReturn);
+      document.removeEventListener('visibilitychange', refreshOnReturn);
+    };
+  }, [user?.id, isAnonymous, authLoading, getCurrentUserId, currentDate]);
 
   // Save to localStorage for anonymous users
   useEffect(() => { if (isAnonymous) localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }, [habits, isAnonymous]);
   useEffect(() => { if (isAnonymous) localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); }, [entries, isAnonymous]);
   useEffect(() => { if (isAnonymous) localStorage.setItem(PLANET_KEY, JSON.stringify(planetObjects)); }, [planetObjects, isAnonymous]);
 
+  useEffect(() => {
+    const nextHabits = habits.map(habit => ({
+      ...habit,
+      streak: calculateStreak(habit.id, entries, currentDate),
+    }));
+    const changed = nextHabits.some((habit, index) => habit.streak !== habits[index].streak);
+    if (changed) setHabits(nextHabits);
+  }, [entries, habits, currentDate]);
+
   const isCompletedToday = useCallback((habitId: string) => {
-    const t = todayFn();
-    return entries.some(e => e.habitId === habitId && e.date === t && e.completed);
-  }, [entries, todayFn]);
+    return entries.some(e => e.habitId === habitId && e.date === currentDate && e.completed);
+  }, [entries, currentDate]);
 
   const addHabit = useCallback(async (name: string, type: HabitType, icon: string) => {
     console.log('[addHabit] Starting addHabit function');
@@ -220,18 +280,26 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
 
   const deleteHabit = useCallback(async (habitId: string) => {
     if (!isAnonymous) {
+      const { error: objectsError } = await supabase
+        .from('planet_objects')
+        .delete()
+        .eq('habit_id', habitId);
+      if (objectsError) throw objectsError;
+
       const { error } = await supabase.from('habits').delete().eq('id', habitId);
       if (error) throw error;
     }
     setHabits(prev => prev.filter(h => h.id !== habitId));
     setEntries(prev => prev.filter(e => e.habitId !== habitId));
+    setPlanetObjects(prev => prev.filter(object => object.habitId !== habitId));
   }, [isAnonymous]);
 
   const completeHabit = useCallback(async (habitId: string) => {
     if (isCompletedToday(habitId)) return;
 
     const t = todayFn();
-    const currentUserId = getCurrentUserId();
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUserId = isAnonymous ? getCurrentUserId() : session?.user?.id ?? user?.id;
     if (!currentUserId) return;
 
     const newEntry = { habitId, date: t, completed: true };
@@ -249,17 +317,25 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
       setEntries(prev => [...prev, newEntry]);
     }
 
-    let newStreak = 0;
-    setHabits(prev => prev.map(h => {
-      if (h.id !== habitId) return h;
-      newStreak = h.streak + 1;
-      return { ...h, streak: newStreak };
-    }));
-
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
 
-    const currentStreak = (habits.find(h => h.id === habitId)?.streak ?? 0) + 1;
+    const newStreak = calculateStreak(habitId, [...entries, newEntry], t);
+    if (!isAnonymous) {
+      const { error } = await supabase
+        .from('habits')
+        .update({ streak: newStreak })
+        .eq('id', habitId)
+        .eq('user_id', currentUserId);
+      if (error && error.code !== 'PGRST204') throw error;
+    }
+
+    setHabits(prev => prev.map(h => {
+      if (h.id !== habitId) return h;
+      return { ...h, streak: newStreak };
+    }));
+
+    const currentStreak = newStreak;
     const isMilestone = [7, 30, 100].includes(currentStreak);
 
     const pos = surfacePoint(isMilestone ? 1.62 : 1.58);
@@ -268,6 +344,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
 
     const newObj: PlanetObject = {
       id: objId,
+      habitId,
       type: habit.type,
       subType: ICON_TO_SUBTYPE[habit.icon],
       position: pos,
@@ -283,6 +360,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
       const { error } = await supabase.from('planet_objects').insert({
         id: objId,
         user_id: currentUserId,
+        habit_id: habitId,
         type: habit.type,
         sub_type: newObj.subType,
         position_x: pos[0],
@@ -301,7 +379,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     setSparklePos(pos);
     setTimeout(() => setNewObjectId(null), 2000);
     setTimeout(() => setSparklePos(null), 2000);
-  }, [habits, isCompletedToday, todayFn, isAnonymous, getCurrentUserId]);
+  }, [habits, isCompletedToday, todayFn, isAnonymous, getCurrentUserId, user?.id]);
 
   const resetAll = useCallback(async () => {
     if (!isAnonymous) {
@@ -324,19 +402,18 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     localStorage.removeItem(PLANET_KEY);
   }, [isAnonymous, getCurrentUserId]);
 
-  const simulateStreak = useCallback((days: number) => {
+  const simulateStreak = useCallback(async (days: number) => {
     if (habits.length === 0) return;
 
-    const baseDate = new Date(todayFn());
+    const startDate = todayFn();
+    const finalDate = addDays(startDate, days);
     const newEntries: HabitEntry[] = [];
     const newObjects: PlanetObject[] = [];
 
     habits.forEach(habit => {
       const currentStreak = habit.streak;
       for (let d = 1; d <= days; d++) {
-        const date = new Date(baseDate);
-        date.setDate(baseDate.getDate() + d);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = addDays(startDate, d);
 
         // Skip if already has an entry for this date
         const alreadyDone = entries.some(e => e.habitId === habit.id && e.date === dateStr);
@@ -353,6 +430,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
 
         newObjects.push({
           id: uid(),
+          habitId: habit.id,
           type: habit.type,
           subType: ICON_TO_SUBTYPE[habit.icon],
           position: pos,
@@ -364,10 +442,70 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
       }
     });
 
-    setEntries(prev => [...prev, ...newEntries]);
-    setPlanetObjects(prev => [...prev, ...newObjects]);
-    setHabits(prev => prev.map(h => ({ ...h, streak: h.streak + days })));
-  }, [habits, entries, todayFn]);
+    syncingSimulation.current = true;
+    try {
+      if (!isAnonymous) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id ?? user?.id;
+        if (!userId) throw new Error('Unable to identify the signed-in user for simulation.');
+
+        if (newEntries.length > 0) {
+          const { error } = await supabase.from('habit_entries').upsert(
+            newEntries.map(entry => ({
+              habit_id: entry.habitId,
+              user_id: userId,
+              date: entry.date,
+              completed: entry.completed,
+            })),
+            { onConflict: 'habit_id,date' },
+          );
+          if (error) throw error;
+        }
+
+        if (newObjects.length > 0) {
+          const { error } = await supabase.from('planet_objects').insert(
+            newObjects.map(object => ({
+              id: object.id,
+              user_id: userId,
+              habit_id: object.habitId,
+              type: object.type,
+              sub_type: object.subType,
+              position_x: object.position[0],
+              position_y: object.position[1],
+              position_z: object.position[2],
+              scale: object.scale,
+              color: object.color,
+              rotation: object.rotation,
+              milestone: object.milestone,
+            })),
+          );
+          if (error) throw error;
+        }
+
+        const { error: habitsError } = await supabase.from('habits').upsert(
+          habits.map(habit => ({
+            id: habit.id,
+            user_id: userId,
+            name: habit.name,
+            icon: habit.icon,
+            type: habit.type,
+            streak: calculateStreak(habit.id, [...entries, ...newEntries], finalDate),
+          })),
+          { onConflict: 'id' },
+        );
+        if (habitsError) throw habitsError;
+      }
+
+      setEntries(prev => [...prev, ...newEntries]);
+      setPlanetObjects(prev => [...prev, ...newObjects]);
+      setHabits(prev => prev.map(h => ({
+        ...h,
+        streak: calculateStreak(h.id, [...entries, ...newEntries], finalDate),
+      })));
+    } finally {
+      syncingSimulation.current = false;
+    }
+  }, [habits, entries, todayFn, isAnonymous, user?.id]);
 
   const getTotalCompletions = useCallback(() => entries.filter(e => e.completed).length, [entries]);
   const getLongestStreak = useCallback(() => habits.length === 0 ? 0 : Math.max(...habits.map(h => h.streak), 0), [habits]);

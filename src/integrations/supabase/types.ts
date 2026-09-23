@@ -87,6 +87,7 @@ export type Database = {
           color: string
           created_at: string
           id: string
+          habit_id: string | null
           milestone: boolean
           position_x: number
           position_y: number
@@ -101,6 +102,7 @@ export type Database = {
           color: string
           created_at?: string
           id?: string
+          habit_id?: string | null
           milestone?: boolean
           position_x: number
           position_y: number
@@ -162,7 +164,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_database_date: {
+        Args: Record<string, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

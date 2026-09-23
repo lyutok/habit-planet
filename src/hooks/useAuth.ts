@@ -99,6 +99,9 @@ export function useAuth() {
       password,
     });
     if (error) throw error;
+    if (data.user && data.user.identities?.length === 0) {
+      throw new Error('An account with this email already exists.');
+    }
 
     // If sign-up successful and user is now authenticated, migrate data
     if (data.user) {

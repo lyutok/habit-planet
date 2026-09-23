@@ -14,6 +14,7 @@ const createNoopQueryBuilder = () => {
     eq: () => query,
     maybeSingle: async () => emptyResult(null),
     insert: async () => emptyResult(null),
+    upsert: async () => emptyResult(null),
     update: async () => emptyResult(null),
     delete: () => ({
       eq: async () => emptyResult(null),
@@ -38,6 +39,7 @@ const createMockSupabaseClient = (): SupabaseClient<Database> => ({
       },
     }),
   },
+  rpc: async () => emptyResult(null),
   from: () => createNoopQueryBuilder(),
 } as unknown as SupabaseClient<Database>);
 

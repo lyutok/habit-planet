@@ -1,4 +1,4 @@
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { PlanetScene } from '@/components/PlanetScene';
@@ -10,6 +10,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -34,7 +36,7 @@ function LoadingPlanet() {
 }
 
 const Index = () => {
-  const { dayOffset, advanceDay, resetOffset, getToday, jumpDays } = useDevDate();
+  const { dayOffset, advanceDay, resetOffset, getToday, jumpDays, databaseDate, setDatabaseDate } = useDevDate();
   const [showDevPanel, setShowDevPanel] = useState(false);
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -45,6 +47,25 @@ const Index = () => {
   const [authPending, setAuthPending] = useState(false);
 
   const { user, isAnonymous, signIn, signUp, signOut, isAdmin } = useAuth();
+
+  useEffect(() => {
+    if (!user || isAnonymous) {
+      setDatabaseDate(null);
+      return;
+    }
+
+    let active = true;
+    supabase.rpc('get_database_date').then(({ data, error }) => {
+      if (active && !error && data) setDatabaseDate(data);
+    });
+
+    return () => { active = false; };
+  }, [user, isAnonymous, setDatabaseDate]);
+
+  const effectiveToday = useCallback(
+    () => getToday(),
+    [getToday],
+  );
 
   const {
     habits,
@@ -63,7 +84,7 @@ const Index = () => {
     getTodayCount,
     simulateStreak,
     resetAll,
-  } = useRemoteHabits({ getToday });
+  } = useRemoteHabits({ getToday: effectiveToday });
 
   const [showModal, setShowModal] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -99,6 +120,10 @@ const Index = () => {
 
     if (normalized.includes('email rate limit exceeded')) {
       return 'Too many email attempts. Please wait a minute and try again.';
+    }
+
+    if (normalized.includes('already exists')) {
+      return 'This email already exists. Try signing in instead.';
     }
 
     return message;
@@ -148,6 +173,7 @@ const Index = () => {
       localStorage.setItem('habitplanet_last_viewed_objects', JSON.stringify(planetObjects));
       
       await signOut();
+      setAuthOpen(false);
       clearAuthForm();
     } catch (error) {
       setAuthError(getReadableAuthError(error, 'Unable to sign out.'));
@@ -362,6 +388,12 @@ const Index = () => {
 
         {/* 3D Canvas */}
         <main className="relative flex-1">
+          {loading && (
+            <div className="absolute inset-0 z-20 bg-background/80 backdrop-blur-sm">
+              <LoadingPlanet />
+            </div>
+          )}
+
           {/* Bottom hint */}
           <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border/40 bg-card/60 px-3 py-1.5 backdrop-blur-sm pointer-events-none">
             <p className="text-xs text-muted-foreground">
@@ -548,7 +580,18 @@ const Index = () => {
                   ] as const).map(({ days, label, hint }) => (
                     <button
                       key={days}
-                      onClick={() => { simulateStreak(days); jumpDays(days); }}
+                      onClick={async () => {
+                        try {
+                          await simulateStreak(days);
+                        } catch (error) {
+                          const databaseError = error as { message?: string; code?: string };
+                          toast.error('Simulation could not sync', {
+                            description: [databaseError.message, databaseError.code].filter(Boolean).join(' | '),
+                          });
+                        } finally {
+                          jumpDays(days);
+                        }
+                      }}
                       disabled={habits.length === 0}
                       className="flex w-full items-center justify-between rounded-xl bg-accent/20 hover:bg-accent/35 text-accent-foreground text-xs font-bold px-3 py-1.5 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
                     >

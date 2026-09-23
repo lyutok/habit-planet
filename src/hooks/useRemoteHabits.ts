@@ -102,24 +102,12 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
 
     const loadFromDB = async () => {
       if (isAnonymous) {
-        // For anonymous users, prefer last viewed data (from logout), otherwise regular data
-        const lastViewedHabits = load(LAST_VIEWED_HABITS_KEY, null);
-        const lastViewedEntries = load(LAST_VIEWED_ENTRIES_KEY, null);
-        const lastViewedObjects = load(LAST_VIEWED_PLANET_KEY, null);
-        
         if (!active) return;
 
-        if (lastViewedHabits !== null) {
-          // User just logged out, show their last viewed data
-          setHabits(lastViewedHabits);
-          setEntries(lastViewedEntries || []);
-          setPlanetObjects(lastViewedObjects || []);
-        } else {
-          // New anonymous user, start with regular localStorage (should be empty)
-          setHabits(load(HABITS_KEY, []));
-          setEntries(load(ENTRIES_KEY, []));
-          setPlanetObjects(load(PLANET_KEY, []));
-        }
+        // Anonymous mode starts from the local store; logout clears it first.
+        setHabits(load(HABITS_KEY, []));
+        setEntries(load(ENTRIES_KEY, []));
+        setPlanetObjects(load(PLANET_KEY, []));
         setLoading(false);
         return;
       }

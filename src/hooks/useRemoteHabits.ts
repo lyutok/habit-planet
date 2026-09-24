@@ -59,14 +59,21 @@ function addDays(date: string, days: number): string {
   return value.toISOString().split('T')[0];
 }
 
-function calculateStreak(habitId: string, entries: HabitEntry[], today: string): number {
+export function calculateStreak(habitId: string, entries: HabitEntry[], today: string): number {
   const completedDates = new Set(
     entries
       .filter(entry => entry.habitId === habitId && entry.completed)
       .map(entry => entry.date),
   );
+
+  const latestCompletedDate = [...completedDates]
+    .filter(date => date <= today)
+    .sort()
+    .at(-1);
+  if (!latestCompletedDate) return 0;
+
   let streak = 0;
-  let date = today;
+  let date = latestCompletedDate;
   while (completedDates.has(date)) {
     streak += 1;
     date = previousDate(date);
@@ -315,7 +322,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
 
-    const newStreak = calculateStreak(habitId, [...entries, newEntry], t);
+    const newStreak = habit.streak + 1;
     if (!isAnonymous) {
       const { error } = await supabase
         .from('habits')

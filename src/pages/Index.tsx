@@ -518,17 +518,28 @@ const Index = () => {
             style={{ maxHeight: '80vh' }}
           >
             {/* Drag handle + toggle */}
-            <button
-              onClick={() => setDrawerOpen(v => !v)}
-              className="flex w-full flex-col items-center gap-1.5 pb-2 pt-3 active:bg-muted/20 transition-colors"
-            >
-              <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">My Habits</span>
-                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">{habits.length}</span>
-                {drawerOpen ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronUp size={14} className="text-muted-foreground" />}
-              </div>
-            </button>
+            <div className="flex items-end gap-2 px-3 pb-2 pt-3">
+              <button
+                onClick={() => setDrawerOpen(v => !v)}
+                className="flex min-w-0 flex-1 flex-col items-center gap-1.5 active:bg-muted/20 transition-colors"
+              >
+                <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">My Habits</span>
+                  <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">{habits.length}</span>
+                  {drawerOpen ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronUp size={14} className="text-muted-foreground" />}
+                </div>
+              </button>
+              <button
+                onClick={togglePlanetStyle}
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-border/40 bg-card/70 px-3 py-2 text-xs font-bold text-muted-foreground backdrop-blur-sm transition-all hover:bg-card hover:text-foreground active:scale-95"
+                title={`Switch to ${planetStyle === 'earth' ? 'classic' : 'Earth'} planet`}
+                aria-label={`Switch to ${planetStyle === 'earth' ? 'classic' : 'Earth'} planet`}
+              >
+                <Palette size={13} />
+                <span>{planetStyle === 'earth' ? 'Classic' : 'Earth'}</span>
+              </button>
+            </div>
 
             {/* Panel content */}
             <div className="flex-1 overflow-y-auto px-4 pb-4">
@@ -559,7 +570,7 @@ const Index = () => {
       {/* Dev Panel — admin users only */}
       <button
         onClick={togglePlanetStyle}
-        className="fixed bottom-5 right-16 z-50 flex items-center gap-1.5 rounded-full border border-border/40 bg-card/70 px-3 py-2 text-xs font-bold text-muted-foreground backdrop-blur-sm transition-all hover:bg-card hover:text-foreground hover:scale-105"
+        className="fixed bottom-5 right-16 z-50 hidden items-center gap-1.5 rounded-full border border-border/40 bg-card/70 px-3 py-2 text-xs font-bold text-muted-foreground backdrop-blur-sm transition-all hover:bg-card hover:text-foreground hover:scale-105 sm:flex"
         title={`Switch to ${planetStyle === 'earth' ? 'classic' : 'Earth'} planet`}
         aria-label={`Switch to ${planetStyle === 'earth' ? 'classic' : 'Earth'} planet`}
       >

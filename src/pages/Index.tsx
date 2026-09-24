@@ -199,7 +199,7 @@ const Index = () => {
           <img
             src="/image/planet_icon.png"
             alt="Habit Planet"
-            className="h-8 w-8 rounded-full object-cover ring-1 ring-primary/30 sm:h-9 sm:w-9"
+            className="h-8 w-8 rounded-full object-cover sm:h-9 sm:w-9"
           />
           <div>
             <h1 className="text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">

@@ -210,7 +210,8 @@ const Index = () => {
         </div>
 
         {/* Stats + Clear button row */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="min-w-0 max-w-[calc(100vw-5.5rem)] overflow-x-auto pb-1 sm:max-w-none sm:overflow-visible sm:pb-0">
+          <div className="flex min-w-max items-center gap-1.5 sm:gap-2">
           <Dialog
             open={authOpen}
             onOpenChange={(open) => {
@@ -375,6 +376,7 @@ const Index = () => {
               </button>
             )
           )}
+          </div>
         </div>
       </header>
 

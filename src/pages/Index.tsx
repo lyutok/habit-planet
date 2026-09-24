@@ -28,7 +28,7 @@ function LoadingPlanet() {
   return (
     <div className="flex h-full items-center justify-center">
       <div className="text-center">
-        <div className="mb-3 text-4xl animate-spin">🪐</div>
+        <div className="mb-3 text-4xl animate-spin">🌏</div>
         <p className="text-sm text-muted-foreground">Growing your planet...</p>
       </div>
     </div>
@@ -429,7 +429,7 @@ const Index = () => {
           {habits.length === 0 && (
             <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
               <div className="rounded-3xl border border-border/40 bg-card/90 p-6 sm:p-8 text-center backdrop-blur-md max-w-sm w-full shadow-2xl animate-scale-in">
-                <div className="mb-3 text-6xl">🪐</div>
+                <div className="mb-3 text-6xl">🌏</div>
                 <h2 className="mb-1.5 text-2xl font-black text-foreground font-display">Your planet awaits</h2>
                 <p className="mb-5 text-sm text-muted-foreground leading-relaxed">
                   Every habit you complete grows something new on your world — trees, flowers, mountains, buildings. The longer your streak, the more it transforms.

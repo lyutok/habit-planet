@@ -7,7 +7,7 @@ import { AddHabitModal } from '@/components/AddHabitModal';
 import { useRemoteHabits } from '@/hooks/useRemoteHabits';
 import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette } from 'lucide-react';
+import { Flame, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -196,9 +196,11 @@ const Index = () => {
       <header className="flex shrink-0 items-center justify-between border-b border-border/40 bg-card/30 px-3 py-2 backdrop-blur-xl sm:px-5 sm:py-3">
         {/* Logo */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/30 sm:h-9 sm:w-9">
-            <Globe size={16} className="text-primary sm:size-[18px]" />
-          </div>
+          <img
+            src="/image/planet_icon.png"
+            alt="Habit Planet"
+            className="h-8 w-8 rounded-full object-cover ring-1 ring-primary/30 sm:h-9 sm:w-9"
+          />
           <div>
             <h1 className="text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
               Habit Planet

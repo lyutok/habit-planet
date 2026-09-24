@@ -16,7 +16,81 @@ function tint(hex: string, d: number): string {
 }
 
 // ─── Planet ───────────────────────────────────────────────────────────────────
-function Planet() {
+function createEarthTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+
+  const ocean = context.createLinearGradient(0, 0, 0, canvas.height);
+  ocean.addColorStop(0, '#0d4775');
+  ocean.addColorStop(0.45, '#1679a5');
+  ocean.addColorStop(1, '#062d59');
+  context.fillStyle = ocean;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const land = [
+    [[112, 138], [178, 92], [264, 110], [300, 166], [260, 218], [205, 236], [172, 300], [132, 274], [146, 218], [92, 184]],
+    [[316, 76], [382, 62], [438, 98], [414, 145], [362, 158], [332, 130]],
+    [[462, 206], [512, 174], [555, 204], [542, 270], [506, 318], [474, 294], [488, 250]],
+    [[610, 96], [692, 76], [760, 118], [732, 176], [670, 196], [624, 164]],
+    [[736, 248], [804, 226], [864, 266], [838, 326], [786, 344], [748, 302]],
+    [[884, 112], [954, 132], [974, 192], [928, 222], [884, 188]],
+  ];
+
+  land.forEach((points, index) => {
+    context.beginPath();
+    points.forEach(([x, y], pointIndex) => {
+      if (pointIndex === 0) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    });
+    context.closePath();
+    const landGradient = context.createLinearGradient(0, 60, 0, 350);
+    landGradient.addColorStop(0, index % 2 ? '#8eaa58' : '#4f9b59');
+    landGradient.addColorStop(0.55, '#34764b');
+    landGradient.addColorStop(1, '#735b3b');
+    context.fillStyle = landGradient;
+    context.fill();
+  });
+
+  context.fillStyle = 'rgba(231, 244, 207, 0.72)';
+  context.fillRect(0, 0, canvas.width, 22);
+  context.fillRect(0, canvas.height - 20, canvas.width, 20);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+function createCloudTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+
+  context.lineCap = 'round';
+  context.lineWidth = 12;
+  context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  [
+    [80, 130, 270, 164], [350, 110, 560, 86], [660, 154, 920, 126],
+    [120, 350, 350, 320], [470, 366, 740, 332], [820, 386, 980, 350],
+  ].forEach(([startX, startY, endX, endY]) => {
+    context.beginPath();
+    context.moveTo(startX, startY);
+    context.bezierCurveTo(startX + 80, startY - 28, endX - 80, endY + 28, endX, endY);
+    context.stroke();
+  });
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+function ClassicPlanet() {
   const cloudRef = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     if (cloudRef.current) {
@@ -26,40 +100,70 @@ function Planet() {
   });
   return (
     <group>
-      {/* Deep ocean */}
       <mesh castShadow receiveShadow>
         <icosahedronGeometry args={[1.5, 3]} />
         <meshPhongMaterial color="#0f5b82" flatShading shininess={80} specular="#44ccff" />
       </mesh>
-      {/* Primary land */}
       <mesh receiveShadow>
         <icosahedronGeometry args={[1.515, 2]} />
         <meshPhongMaterial color="#27763d" flatShading transparent opacity={0.9} shininess={6} />
       </mesh>
-      {/* Highlight patches */}
       <mesh receiveShadow>
         <icosahedronGeometry args={[1.525, 1]} />
         <meshPhongMaterial color="#3ea050" flatShading transparent opacity={0.5} shininess={4} />
       </mesh>
-      {/* Desert/sand accent */}
       <mesh receiveShadow>
         <icosahedronGeometry args={[1.528, 1]} />
         <meshPhongMaterial color="#c8a060" flatShading transparent opacity={0.18} shininess={2} />
       </mesh>
-      {/* Cloud layer */}
       <mesh ref={cloudRef}>
         <icosahedronGeometry args={[1.62, 3]} />
         <meshPhongMaterial color="#cce8ff" flatShading transparent opacity={0.18} depthWrite={false} />
       </mesh>
-      {/* Atmosphere */}
       <mesh>
         <sphereGeometry args={[1.82, 32, 32]} />
         <meshPhongMaterial color="#4488ff" transparent opacity={0.06} side={THREE.BackSide} depthWrite={false} />
       </mesh>
-      {/* Outer glow halo */}
       <mesh>
         <sphereGeometry args={[2.1, 32, 32]} />
         <meshPhongMaterial color="#2255cc" transparent opacity={0.025} side={THREE.BackSide} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
+function EarthPlanet() {
+  const cloudRef = useRef<THREE.Mesh>(null);
+  const earthTexture = useMemo(createEarthTexture, []);
+  const cloudTexture = useMemo(createCloudTexture, []);
+  useFrame(({ clock }) => {
+    if (cloudRef.current) {
+      cloudRef.current.rotation.y = clock.elapsedTime * 0.05;
+      cloudRef.current.rotation.z = Math.sin(clock.elapsedTime * 0.015) * 0.04;
+    }
+  });
+  return (
+    <group>
+      {/* Smooth textured globe with blue oceans and irregular landmasses */}
+      <mesh castShadow receiveShadow>
+        <sphereGeometry args={[1.5, 64, 48]} />
+        <meshStandardMaterial map={earthTexture} roughness={0.82} metalness={0.02} />
+      </mesh>
+
+      {/* Slowly drifting cloud bands */}
+      <mesh ref={cloudRef}>
+        <sphereGeometry args={[1.555, 64, 48]} />
+        <meshBasicMaterial map={cloudTexture} transparent opacity={0.62} depthWrite={false} />
+      </mesh>
+
+      {/* Blue atmospheric rim and soft outer halo */}
+      <mesh>
+        <sphereGeometry args={[1.82, 32, 32]} />
+        <meshBasicMaterial color="#4db8ff" transparent opacity={0.1} side={THREE.BackSide} depthWrite={false} />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[2.1, 32, 32]} />
+        <meshBasicMaterial color="#1b74d1" transparent opacity={0.035} side={THREE.BackSide} depthWrite={false} />
       </mesh>
     </group>
   );
@@ -1126,6 +1230,7 @@ interface PlanetSceneProps {
   newObjectId: string | null;
   sparklePos: [number,number,number] | null;
   longestStreak: number;
+  planetStyle: 'earth' | 'classic';
 }
 
 // Fixed positions for milestone creatures/plants so they don't re-randomize
@@ -1151,7 +1256,7 @@ const GLOW_PLANT_POSITIONS: [number,number,number][] = [
   [-0.3, -1.0,  1.1],
 ];
 
-export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStreak }: PlanetSceneProps) {
+export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStreak, planetStyle }: PlanetSceneProps) {
   const [sparkleKey, setSparkleKey] = useState(0);
 
   useEffect(() => {
@@ -1213,7 +1318,7 @@ export function PlanetScene({ planetObjects, newObjectId, sparklePos, longestStr
       />
 
       <FloatingPlanet>
-        <Planet />
+        {planetStyle === 'earth' ? <EarthPlanet /> : <ClassicPlanet />}
 
         {/* Habit-spawned objects */}
         {planetObjects.map(obj => (

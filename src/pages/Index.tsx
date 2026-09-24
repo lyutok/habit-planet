@@ -7,7 +7,7 @@ import { AddHabitModal } from '@/components/AddHabitModal';
 import { useRemoteHabits } from '@/hooks/useRemoteHabits';
 import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
+import { Flame, Globe, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,6 +45,9 @@ const Index = () => {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const [authPending, setAuthPending] = useState(false);
+  const [planetStyle, setPlanetStyle] = useState<'earth' | 'classic'>(() => {
+    return localStorage.getItem('habitplanet_style') === 'earth' ? 'earth' : 'classic';
+  });
 
   const { user, isAnonymous, signIn, signUp, signOut, isAdmin } = useAuth();
 
@@ -128,6 +131,14 @@ const Index = () => {
     }
 
     return message;
+  };
+
+  const togglePlanetStyle = () => {
+    setPlanetStyle(current => {
+      const next = current === 'earth' ? 'classic' : 'earth';
+      localStorage.setItem('habitplanet_style', next);
+      return next;
+    });
   };
 
   const handleSignIn = async () => {
@@ -477,6 +488,7 @@ const Index = () => {
                 newObjectId={newObjectId}
                 sparklePos={sparklePos}
                 longestStreak={longestStreak}
+                planetStyle={planetStyle}
               />
             </Suspense>
           </Canvas>
@@ -539,6 +551,17 @@ const Index = () => {
           disabled={loading}
         />
       )}
+
+      {/* Dev Panel — admin users only */}
+      <button
+        onClick={togglePlanetStyle}
+        className="fixed bottom-5 right-16 z-50 flex items-center gap-1.5 rounded-full border border-border/40 bg-card/70 px-3 py-2 text-xs font-bold text-muted-foreground backdrop-blur-sm transition-all hover:bg-card hover:text-foreground hover:scale-105"
+        title={`Switch to ${planetStyle === 'earth' ? 'classic' : 'Earth'} planet`}
+        aria-label={`Switch to ${planetStyle === 'earth' ? 'classic' : 'Earth'} planet`}
+      >
+        <Palette size={13} />
+        <span>{planetStyle === 'earth' ? 'Classic' : 'Earth'}</span>
+      </button>
 
       {/* Dev Panel — admin users only */}
       {isAdmin && (

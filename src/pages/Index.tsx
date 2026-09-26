@@ -205,7 +205,7 @@ const Index = () => {
             <h1 className="text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
               Habit Planet
             </h1>
-            <p className="hidden text-[11px] text-muted-foreground leading-none mt-0.5 sm:block">Grow your world, one habit at a time</p>
+            <p className="hidden text-[11px] text-muted-foreground leading-none mt-0.5 sm:block">Grow your world. Small habits create big changes.</p>
           </div>
         </div>
 

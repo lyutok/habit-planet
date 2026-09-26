@@ -7,7 +7,7 @@ import { AddHabitModal } from '@/components/AddHabitModal';
 import { useRemoteHabits } from '@/hooks/useRemoteHabits';
 import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Flame, Sparkles, Trophy, FlaskConical, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette } from 'lucide-react';
+import { Flame, Sparkles, Trophy, FlaskConical, ChevronLeft, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette } from 'lucide-react';
 import { MILESTONES } from '@/types/habits';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +40,7 @@ const Index = () => {
   const [showDevPanel, setShowDevPanel] = useState(false);
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [habitsPanelOpen, setHabitsPanelOpen] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -384,18 +385,31 @@ const Index = () => {
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left Panel — desktop only */}
         {!isMobile && (
-          <aside className="flex w-72 shrink-0 flex-col border-r border-border/40 bg-card/20 p-4 backdrop-blur-xl">
-            <HabitPanel
-              habits={habits}
-              isCompletedToday={isCompletedToday}
-              onComplete={completeHabit}
-              onDelete={deleteHabit}
-              onAddHabit={() => setShowModal(true)}
-              nextMilestone={nextMilestone}
-              longestStreak={longestStreak}
-              onClearAll={() => { resetAll(); }}
-            />
-          </aside>
+          <div className={`relative h-full shrink-0 transition-[width] duration-300 ease-in-out ${habitsPanelOpen ? 'w-72' : 'w-0'}`}>
+            <div className="h-full w-full overflow-hidden">
+              <aside className="flex h-full w-72 shrink-0 flex-col border-r border-border/40 bg-card/20 p-4 backdrop-blur-xl">
+                <HabitPanel
+                  habits={habits}
+                  isCompletedToday={isCompletedToday}
+                  onComplete={completeHabit}
+                  onDelete={deleteHabit}
+                  onAddHabit={() => setShowModal(true)}
+                  nextMilestone={nextMilestone}
+                  longestStreak={longestStreak}
+                  onClearAll={() => { resetAll(); }}
+                />
+              </aside>
+            </div>
+            <button
+              onClick={() => setHabitsPanelOpen(open => !open)}
+              className="absolute right-0 top-1/2 z-20 flex h-10 w-6 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-r-md border border-border/50 bg-card/90 text-muted-foreground shadow-md backdrop-blur transition-colors hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={habitsPanelOpen ? 'Hide habits panel' : 'Show habits panel'}
+              aria-expanded={habitsPanelOpen}
+              title={habitsPanelOpen ? 'Hide habits panel' : 'Show habits panel'}
+            >
+              {habitsPanelOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            </button>
+          </div>
         )}
 
         {/* 3D Canvas */}

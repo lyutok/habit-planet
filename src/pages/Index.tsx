@@ -196,11 +196,11 @@ const Index = () => {
       <header className="flex shrink-0 items-center justify-between border-b border-border/40 bg-card/30 px-3 py-2 backdrop-blur-xl sm:px-5 sm:py-3">
         {/* Logo */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <img
+          {/* <img
             src="/image/planet_icon.png"
             alt="Habit Planet"
             className="h-8 w-8 rounded-full object-cover sm:h-9 sm:w-9"
-          />
+          /> */}
           <div>
             <h1 className="text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
               Habit Planet

@@ -195,9 +195,9 @@ const Index = () => {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Top Bar */}
-      <header className="flex shrink-0 items-center justify-between border-b border-border/40 bg-card/30 px-3 py-2 backdrop-blur-xl sm:px-5 sm:py-3">
+      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 bg-card/30 px-3 py-2 backdrop-blur-xl sm:px-5 sm:py-3">
         {/* Logo */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {/* <img
             src="/image/planet_icon.png"
             alt="Habit Planet"
@@ -205,7 +205,7 @@ const Index = () => {
           /> */}
           <div className="flex flex-col">
             <div className="flex items-center gap-0.5">
-              <h1 className="text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
+              <h1 className="whitespace-nowrap text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
                 Habit Planet
               </h1>
               <Popover>

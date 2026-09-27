@@ -517,9 +517,9 @@ const Index = () => {
                 {/* Milestone preview */}
                 <div className="mb-5 grid grid-cols-3 gap-2 text-left">
                   {[
-                    { emoji: '🌿', days: '7 days', title: 'Week Warrior', desc: 'Bigger trees' },
+                    { emoji: '🌿', days: '7 days', title: 'Week Warrior', desc: 'Trees grow' },
                     { emoji: '🦋', days: '30 days', title: 'Month Master', desc: 'Animals appear' },
-                    { emoji: '✨', days: '100 days', title: 'Legend', desc: 'Glowing plants' },
+                    { emoji: '✨', days: '100 days', title: 'Legend', desc: 'World evolves' },
                   ].map(m => (
                     <div key={m.days} className="rounded-2xl border border-border/30 bg-muted/30 px-2 py-2.5 flex flex-col items-center gap-1">
                       <span className="text-xl">{m.emoji}</span>

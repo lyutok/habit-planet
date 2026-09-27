@@ -92,7 +92,7 @@ export interface Milestone {
 }
 
 export const MILESTONES: Milestone[] = [
-  { streak: 7,   label: 'Week Warrior',   emoji: '🌿', description: 'Bigger trees appear' },
-  { streak: 30,  label: 'Month Master',   emoji: '🦋', description: 'Butterflies appear' },
-  { streak: 100, label: 'Legend',          emoji: '✨', description: 'Glowing plants bloom' },
+  { streak: 7,   label: 'Week Warrior',   emoji: '🌿', description: 'Trees grow' },
+  { streak: 30,  label: 'Month Master',   emoji: '🦋', description: 'Animals appear' },
+  { streak: 100, label: 'Legend',          emoji: '✨', description: 'World evolves' },
 ];

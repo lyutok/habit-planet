@@ -200,20 +200,20 @@ const Index = () => {
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {/* <img
             src="/image/planet_icon.png"
-            alt="Habit Planet"
+            alt="Seed Planet"
             className="h-8 w-8 rounded-full object-cover sm:h-9 sm:w-9"
           /> */}
           <div className="flex flex-col">
             <div className="flex items-center gap-0.5">
               <h1 className="whitespace-nowrap text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
-                Habit Planet
+                Seed Planet
               </h1>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
                     className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border/30 bg-card/40 text-[11px] font-bold text-muted-foreground/40 transition-colors hover:bg-card/80 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    title="How Habit Planet works"
-                    aria-label="How Habit Planet works"
+                    title="How Seed Planet works"
+                    aria-label="How Seed Planet works"
                   >
                     ?
                   </button>
@@ -285,7 +285,7 @@ const Index = () => {
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>{isAnonymous ? 'Login to Habit Planet' : 'Account'}</DialogTitle>
+                <DialogTitle>{isAnonymous ? 'Login to Seed Planet' : 'Account'}</DialogTitle>
                 <DialogDescription>
                   {isAnonymous
                     ? 'Sign in to save your planet in the cloud.'

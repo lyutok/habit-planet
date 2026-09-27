@@ -204,14 +204,14 @@ const Index = () => {
             className="h-8 w-8 rounded-full object-cover sm:h-9 sm:w-9"
           /> */}
           <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5">
               <h1 className="text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
                 Habit Planet
               </h1>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
-                    className="flex h-6 w-6 items-center justify-center rounded-full border border-border/30 bg-card/40 text-[11px] font-bold text-muted-foreground/40 transition-colors hover:bg-card/80 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border/30 bg-card/40 text-[11px] font-bold text-muted-foreground/40 transition-colors hover:bg-card/80 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="How Habit Planet works"
                     aria-label="How Habit Planet works"
                   >

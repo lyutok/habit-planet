@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
   DialogContent,
@@ -202,10 +203,59 @@ const Index = () => {
             alt="Habit Planet"
             className="h-8 w-8 rounded-full object-cover sm:h-9 sm:w-9"
           /> */}
-          <div>
-            <h1 className="text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
-              Habit Planet
-            </h1>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
+                Habit Planet
+              </h1>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="flex h-6 w-6 items-center justify-center rounded-full border border-border/30 bg-card/40 text-[11px] font-bold text-muted-foreground/40 transition-colors hover:bg-card/80 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    title="How Habit Planet works"
+                    aria-label="How Habit Planet works"
+                  >
+                    ?
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="start" className="max-h-[70vh] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto border-border/60 bg-card/95 p-4 shadow-2xl backdrop-blur-xl">
+                  <h2 className="mb-3 text-sm font-black text-foreground">How your planet grows</h2>
+
+                  <section className="mb-3">
+                    <h3 className="mb-1 text-xs font-bold text-primary">Small habits, a growing world</h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      Complete a habit once a day to add something to your planet: trees, flowers, mountains, or buildings that match the habit. Your completed growth stays on your world.
+                    </p>
+                  </section>
+
+                  <section className="mb-3">
+                    <h3 className="mb-1 text-xs font-bold text-primary">What is a streak?</h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      A streak counts consecutive calendar days you complete the same habit. Yesterday&apos;s count stays visible while today is still open; complete it today to continue the run.
+                    </p>
+                  </section>
+
+                  <section className="mb-3">
+                    <h3 className="mb-1 text-xs font-bold text-primary">Streak milestones</h3>
+                    <ul className="space-y-1 text-xs leading-relaxed text-muted-foreground">
+                      <li><span className="font-semibold text-foreground">7 days:</span> bigger trees 🌿</li>
+                      <li><span className="font-semibold text-foreground">30 days:</span> butterflies and animals 🦋</li>
+                      <li><span className="font-semibold text-foreground">100 days:</span> glowing plants ✨</li>
+                    </ul>
+                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                      These planet-wide decorations unlock from your longest single-habit streak.
+                    </p>
+                  </section>
+
+                  <section>
+                    <h3 className="mb-1 text-xs font-bold text-primary">Your progress</h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      Add habits for routines you want to build, then check each one off daily. Progress is saved on this device; sign in to sync it to your account.
+                    </p>
+                  </section>
+                </PopoverContent>
+              </Popover>
+            </div>
             <p className="hidden text-[11px] text-muted-foreground leading-none mt-0.5 sm:block">Start small. Grow your world.</p>
           </div>
         </div>
@@ -581,7 +631,7 @@ const Index = () => {
         />
       )}
 
-      {/* Dev Panel — admin users only */}
+      {/* Planet style control */}
       <button
         onClick={togglePlanetStyle}
         className="fixed bottom-5 right-16 z-50 hidden items-center gap-1.5 rounded-full border border-border/40 bg-card/70 px-3 py-2 text-xs font-bold text-muted-foreground backdrop-blur-sm transition-all hover:bg-card hover:text-foreground hover:scale-105 sm:flex"

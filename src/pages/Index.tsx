@@ -206,7 +206,7 @@ const Index = () => {
             <h1 className="text-base font-black leading-none tracking-tight text-gradient-primary font-display sm:text-lg">
               Habit Planet
             </h1>
-            <p className="hidden text-[11px] text-muted-foreground leading-none mt-0.5 sm:block">Grow your world. Small habits create big changes.</p>
+            <p className="hidden text-[11px] text-muted-foreground leading-none mt-0.5 sm:block">Start small. Grow your world.</p>
           </div>
         </div>
 
@@ -413,7 +413,7 @@ const Index = () => {
         )}
 
         {/* 3D Canvas */}
-        <main className="relative flex-1">
+        <main className="relative min-w-0 flex-1">
           {loading && (
             <div className="absolute inset-0 z-20 bg-background/80 backdrop-blur-sm">
               <LoadingPlanet />

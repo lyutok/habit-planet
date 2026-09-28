@@ -4,11 +4,12 @@ import * as THREE from 'three';
 import { PlanetScene } from '@/components/PlanetScene';
 import { HabitPanel } from '@/components/HabitPanel';
 import { AddHabitModal } from '@/components/AddHabitModal';
-import { useRemoteHabits } from '@/hooks/useRemoteHabits';
+import { calculateStreak, useRemoteHabits } from '@/hooks/useRemoteHabits';
 import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { MilestoneCelebrationDialog } from '@/components/MilestoneCelebrationDialog';
 import { Flame, Sparkles, Trophy, FlaskConical, ChevronLeft, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette } from 'lucide-react';
-import { MILESTONES } from '@/types/habits';
+import { getCrossedMilestone, MILESTONES, type Milestone } from '@/types/habits';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -71,7 +72,6 @@ const Index = () => {
     () => getToday(),
     [getToday],
   );
-
   const {
     habits,
     entries,
@@ -90,11 +90,27 @@ const Index = () => {
     simulateStreak,
     resetAll,
     clearLocalData,
-  } = useRemoteHabits({ getToday: effectiveToday });
+  } = useRemoteHabits({ getToday: effectiveToday, isSimulatedDate: isAdmin && dayOffset > 0 });
 
   const [showModal, setShowModal] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [milestoneCelebration, setMilestoneCelebration] = useState<{ milestone: Milestone; habitName: string } | null>(null);
+
+  const handleCompleteHabit = async (habitId: string) => {
+    const habit = habits.find(item => item.id === habitId);
+    const completedStreak = calculateStreak(
+      habitId,
+      [...entries, { habitId, date: getToday(), completed: true }],
+      getToday(),
+    );
+    const previousStreak = calculateStreak(habitId, entries, getToday());
+    const milestone = habit ? getCrossedMilestone(previousStreak, completedStreak) : undefined;
+    await completeHabit(habitId);
+    if (habit && milestone) {
+      setMilestoneCelebration({ milestone, habitName: habit.name });
+    }
+  };
 
   // Toggle dev panel with 'D' key
   useEffect(() => {
@@ -441,7 +457,7 @@ const Index = () => {
                 <HabitPanel
                   habits={habits}
                   isCompletedToday={isCompletedToday}
-                  onComplete={completeHabit}
+                  onComplete={handleCompleteHabit}
                   onDelete={deleteHabit}
                   onAddHabit={() => setShowModal(true)}
                   nextMilestone={nextMilestone}
@@ -610,7 +626,7 @@ const Index = () => {
               <HabitPanel
                 habits={habits}
                 isCompletedToday={isCompletedToday}
-                onComplete={completeHabit}
+                onComplete={handleCompleteHabit}
                 onDelete={deleteHabit}
                 onAddHabit={() => { setShowModal(true); setDrawerOpen(false); }}
                 nextMilestone={nextMilestone}
@@ -682,13 +698,12 @@ const Index = () => {
                       onClick={async () => {
                         try {
                           await simulateStreak(days);
+                          jumpDays(days);
                         } catch (error) {
                           const databaseError = error as { message?: string; code?: string };
                           toast.error('Simulation could not sync', {
                             description: [databaseError.message, databaseError.code].filter(Boolean).join(' | '),
                           });
-                        } finally {
-                          jumpDays(days);
                         }
                       }}
                       disabled={habits.length === 0}
@@ -746,6 +761,14 @@ const Index = () => {
             </button>
           )}
         </>
+      )}
+
+      {milestoneCelebration && (
+        <MilestoneCelebrationDialog
+          milestone={milestoneCelebration.milestone}
+          habitName={milestoneCelebration.habitName}
+          onClose={() => setMilestoneCelebration(null)}
+        />
       )}
     </div>
   );

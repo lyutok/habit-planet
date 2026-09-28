@@ -94,5 +94,9 @@ export interface Milestone {
 export const MILESTONES: Milestone[] = [
   { streak: 7,   label: 'Week Warrior',   emoji: '🌿', description: 'Trees grow' },
   { streak: 30,  label: 'Month Master',   emoji: '🦋', description: 'Animals appear' },
-  { streak: 100, label: 'Legend',          emoji: '✨', description: 'World evolves' },
+  { streak: 100, label: 'Legend',         emoji: '✨', description: 'World evolves' },
 ];
+
+export function getCrossedMilestone(previousStreak: number, currentStreak: number): Milestone | undefined {
+  return MILESTONES.find(({ streak }) => previousStreak < streak && currentStreak >= streak);
+}

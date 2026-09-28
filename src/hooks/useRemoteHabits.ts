@@ -83,9 +83,10 @@ export function calculateStreak(habitId: string, entries: HabitEntry[], today: s
 
 interface UseRemoteHabitsOptions {
   getToday?: () => string;
+  isSimulatedDate?: boolean;
 }
 
-export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
+export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemoteHabitsOptions = {}) {
   const { user, isAnonymous, loading: authLoading, getCurrentUserId } = useAuth();
   const todayFn = useCallback(() => getToday ? getToday() : new Date().toISOString().split('T')[0], [getToday]);
   const currentDate = todayFn();
@@ -97,6 +98,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
   const [sparklePos, setSparklePos] = useState<[number, number, number] | null>(null);
   const [loading, setLoading] = useState(true);
   const syncingSimulation = useRef(false);
+  const dataRevision = useRef(0);
 
   // Load data from Supabase on auth change
   useEffect(() => {
@@ -108,6 +110,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     let active = true;
 
     const loadFromDB = async () => {
+      const revisionAtStart = dataRevision.current;
       if (isAnonymous) {
         if (!active) return;
 
@@ -162,7 +165,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
           milestone: o.milestone,
         }));
 
-        if (active && !syncingSimulation.current) {
+        if (active && !syncingSimulation.current && revisionAtStart === dataRevision.current) {
           setHabits(dbHabits);
           setEntries(dbEntries);
           setPlanetObjects(dbObjects);
@@ -322,14 +325,42 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
 
-    const newStreak = habit.streak + 1;
+    let completionHistory = [...entries, newEntry];
     if (!isAnonymous) {
-      const { error } = await supabase
-        .from('habits')
-        .update({ streak: newStreak })
-        .eq('id', habitId)
-        .eq('user_id', currentUserId);
-      if (error && error.code !== 'PGRST204') throw error;
+      const { data: persistedEntries, error: entriesError } = await supabase
+        .from('habit_entries')
+        .select('date, completed')
+        .eq('habit_id', habitId)
+        .eq('user_id', currentUserId)
+        .eq('completed', true)
+        .lte('date', t);
+      if (entriesError) throw entriesError;
+      completionHistory = persistedEntries.map(entry => ({
+        habitId,
+        date: entry.date,
+        completed: entry.completed,
+      }));
+    }
+
+    const newStreak = calculateStreak(habitId, completionHistory, t);
+    if (!isAnonymous) {
+      const { data: laterEntries, error: laterEntriesError } = await supabase
+        .from('habit_entries')
+        .select('date')
+        .eq('habit_id', habitId)
+        .eq('user_id', currentUserId)
+        .eq('completed', true)
+        .gt('date', t)
+        .limit(1);
+
+      if (isSimulatedDate || (!laterEntriesError && laterEntries.length === 0)) {
+        const { error } = await supabase
+          .from('habits')
+          .update({ streak: newStreak })
+          .eq('id', habitId)
+          .eq('user_id', currentUserId);
+        if (error && error.code !== 'PGRST204') throw error;
+      }
     }
 
     setHabits(prev => prev.map(h => {
@@ -381,7 +412,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     setSparklePos(pos);
     setTimeout(() => setNewObjectId(null), 2000);
     setTimeout(() => setSparklePos(null), 2000);
-  }, [habits, isCompletedToday, todayFn, isAnonymous, getCurrentUserId, user?.id]);
+  }, [habits, entries, isCompletedToday, todayFn, isAnonymous, isSimulatedDate, getCurrentUserId, user?.id]);
 
   const resetAll = useCallback(async () => {
     if (!isAnonymous) {
@@ -418,7 +449,7 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
     localStorage.removeItem(LAST_VIEWED_PLANET_KEY);
   }, []);
 
-  const simulateStreak = useCallback(async (days: number) => {
+  const simulateStreak = useCallback(async (days: number, localOnly = false) => {
     if (habits.length === 0) return;
 
     const startDate = todayFn();
@@ -458,9 +489,10 @@ export function useRemoteHabits({ getToday }: UseRemoteHabitsOptions = {}) {
       }
     });
 
+    dataRevision.current += 1;
     syncingSimulation.current = true;
     try {
-      if (!isAnonymous) {
+      if (!isAnonymous && !localOnly) {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id ?? user?.id;
         if (!userId) throw new Error('Unable to identify the signed-in user for simulation.');

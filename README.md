@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://habits-planet.pages.dev/
+**URL**: https://seed-planet.pages.dev/
 
 # Habit Planet
 

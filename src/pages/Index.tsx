@@ -9,7 +9,7 @@ import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MilestoneCelebrationDialog } from '@/components/MilestoneCelebrationDialog';
 import { StreakResetDialog } from '@/components/StreakResetDialog';
-import { Flame, Sparkles, Trophy, FlaskConical, ChevronLeft, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette } from 'lucide-react';
+import { Flame, Sparkles, Trophy, FlaskConical, ChevronLeft, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette, X } from 'lucide-react';
 import { getCrossedMilestone, MILESTONES, type Milestone } from '@/types/habits';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -676,9 +676,18 @@ const Index = () => {
             }`}
           >
             <div className="rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-4 w-56">
-              <div className="flex items-center gap-2 mb-3">
-                <FlaskConical size={14} className="text-primary" />
-                <span className="text-xs font-black text-foreground/80 uppercase tracking-wider">Dev Mode</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <FlaskConical size={14} className="text-primary" />
+                  <span className="text-xs font-black text-foreground/80 uppercase tracking-wider">Dev Mode</span>
+                </div>
+                <button
+                  onClick={() => setShowDevPanel(false)}
+                  className="rounded-lg p-1 text-muted-foreground/50 transition-colors hover:bg-muted/40 hover:text-foreground"
+                  aria-label="Close dev panel"
+                >
+                  <X size={14} />
+                </button>
               </div>
               <div className="rounded-xl bg-muted/40 px-3 py-2 mb-3 text-center">
                 <div className="text-[10px] text-muted-foreground mb-0.5">Simulated date</div>

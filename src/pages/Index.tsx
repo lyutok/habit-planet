@@ -8,6 +8,7 @@ import { calculateStreak, useRemoteHabits } from '@/hooks/useRemoteHabits';
 import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MilestoneCelebrationDialog } from '@/components/MilestoneCelebrationDialog';
+import { StreakResetDialog } from '@/components/StreakResetDialog';
 import { Flame, Sparkles, Trophy, FlaskConical, ChevronLeft, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette } from 'lucide-react';
 import { getCrossedMilestone, MILESTONES, type Milestone } from '@/types/habits';
 import { useAuth } from '@/hooks/useAuth';
@@ -96,6 +97,7 @@ const Index = () => {
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [milestoneCelebration, setMilestoneCelebration] = useState<{ milestone: Milestone; habitName: string } | null>(null);
+  const [streakReset, setStreakReset] = useState<{ lostStreak: number; habitName: string } | null>(null);
 
   const handleCompleteHabit = async (habitId: string) => {
     const habit = habits.find(item => item.id === habitId);
@@ -106,8 +108,15 @@ const Index = () => {
     );
     const previousStreak = calculateStreak(habitId, entries, getToday());
     const milestone = habit ? getCrossedMilestone(previousStreak, completedStreak) : undefined;
+
+    // Detect streak reset: the habit had a streak but a gap broke it
+    const wasStreakReset = previousStreak > 0 && completedStreak === 1;
+
     await completeHabit(habitId);
-    if (habit && milestone) {
+
+    if (habit && wasStreakReset) {
+      setStreakReset({ lostStreak: previousStreak, habitName: habit.name });
+    } else if (habit && milestone) {
       setMilestoneCelebration({ milestone, habitName: habit.name });
     }
   };
@@ -768,6 +777,14 @@ const Index = () => {
           milestone={milestoneCelebration.milestone}
           habitName={milestoneCelebration.habitName}
           onClose={() => setMilestoneCelebration(null)}
+        />
+      )}
+
+      {streakReset && (
+        <StreakResetDialog
+          lostStreak={streakReset.lostStreak}
+          habitName={streakReset.habitName}
+          onClose={() => setStreakReset(null)}
         />
       )}
     </div>

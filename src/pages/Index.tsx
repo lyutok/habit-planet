@@ -560,6 +560,18 @@ const Index = () => {
                 >
                   🌱 Plant Your First Habit
                 </button>
+                
+                {(!user || isAnonymous) && (
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    <button 
+                      onClick={() => setAuthOpen(true)}
+                      className="text-primary hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
+                    >
+                      Sign in
+                    </button>{' '}
+                    to keep your data.
+                  </p>
+                )}
               </div>
             </div>
           )}

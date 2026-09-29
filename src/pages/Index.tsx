@@ -9,7 +9,7 @@ import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MilestoneCelebrationDialog } from '@/components/MilestoneCelebrationDialog';
 import { StreakResetDialog } from '@/components/StreakResetDialog';
-import { Flame, Sparkles, Trophy, FlaskConical, ChevronLeft, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette, X } from 'lucide-react';
+import { Flame, Sparkles, Trophy, FlaskConical, ChevronLeft, ChevronRight, RotateCcw, ChevronUp, ChevronDown, Trash2, Palette, X, Share2 } from 'lucide-react';
 import { getCrossedMilestone, MILESTONES, type Milestone } from '@/types/habits';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -214,6 +214,32 @@ const Index = () => {
       setAuthError(getReadableAuthError(error, 'Unable to sign out.'));
     } finally {
       setAuthPending(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return;
+
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], 'seed-planet.png', { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'My Seed Planet',
+          files: [file],
+        });
+      } else {
+        // Fallback for desktop/unsupported browsers: trigger download
+        const a = document.createElement('a');
+        a.download = 'seed-planet.png';
+        a.href = dataUrl;
+        a.click();
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
     }
   };
 
@@ -424,6 +450,15 @@ const Index = () => {
             </div>
           )}
 
+          <Button
+            variant="ghost"
+            onClick={handleShare}
+            className="flex items-center gap-1.5 rounded-full border border-border/40 bg-card/70 h-8 px-3 text-xs font-bold backdrop-blur-sm text-muted-foreground/80 hover:text-foreground hover:bg-card/90 transition-all hover:scale-105"
+            title="Share Planet"
+          >
+            <Share2 size={13} />
+            <span className="uppercase tracking-wider text-[10px]">Share</span>
+          </Button>
 
           </div>
         </div>
@@ -558,6 +593,7 @@ const Index = () => {
               alpha: true,
               toneMapping: THREE.ACESFilmicToneMapping,
               toneMappingExposure: 1.15,
+              preserveDrawingBuffer: true,
             }}
           >
             <Suspense fallback={null}>

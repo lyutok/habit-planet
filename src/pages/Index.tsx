@@ -222,7 +222,21 @@ const Index = () => {
     if (!canvas) return;
 
     try {
-      const dataUrl = canvas.toDataURL('image/png');
+      // Create a temporary canvas to composite the dark blue background
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const ctx = tempCanvas.getContext('2d');
+      if (!ctx) return;
+
+      // Fill with the app's dark blue background
+      ctx.fillStyle = '#0b1020';
+      ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+      // Draw the planet scene over it
+      ctx.drawImage(canvas, 0, 0);
+
+      const dataUrl = tempCanvas.toDataURL('image/png');
       const blob = await (await fetch(dataUrl)).blob();
       const file = new File([blob], 'seed-planet.png', { type: 'image/png' });
 

@@ -424,34 +424,7 @@ const Index = () => {
             </div>
           )}
 
-          {/* Clear All button — desktop only; mobile gets it in drawer */}
-          {habits.length > 0 && (
-            confirmClear ? (
-              <div className="hidden sm:flex items-center gap-1">
-                <button
-                  onClick={() => { resetAll(); setConfirmClear(false); }}
-                  className="rounded-lg bg-destructive px-2.5 py-1 text-[11px] font-black text-destructive-foreground transition-all active:scale-95 hover:bg-destructive/90"
-                >
-                  Confirm
-                </button>
-                <button
-                  onClick={() => setConfirmClear(false)}
-                  className="rounded-lg border border-border/60 bg-card/60 px-2.5 py-1 text-[11px] font-bold text-muted-foreground transition-all active:scale-95 hover:bg-muted/40"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setConfirmClear(true)}
-                className="hidden sm:flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-[11px] font-bold text-destructive transition-all hover:bg-destructive/20 active:scale-95"
-                title="Clear all data"
-              >
-                <Trash2 size={11} />
-                <span>Clear All</span>
-              </button>
-            )
-          )}
+
           </div>
         </div>
       </header>

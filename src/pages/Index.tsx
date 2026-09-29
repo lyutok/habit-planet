@@ -131,9 +131,9 @@ const Index = () => {
   }, []);
 
   const totalCompletions = getTotalCompletions();
-  const longestStreak    = getLongestStreak();
-  const currentStreak    = getCurrentStreak();
-  const todayCompleted   = getTodayCount();
+  const longestStreak = getLongestStreak();
+  const currentStreak = getCurrentStreak();
+  const todayCompleted = getTodayCount();
 
   // Next milestone
   const nextMilestone = MILESTONES.find(m => longestStreak < m.streak);
@@ -228,7 +228,8 @@ const Index = () => {
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: 'My Seed Planet',
+          title: 'Look at my planet!',
+          text: "I'm growing my planet by completing daily habits. Join me on Seed Planet! https://seedplanet.app",
           files: [file],
         });
       } else {
@@ -314,151 +315,151 @@ const Index = () => {
         {/* Stats + Clear button row */}
         <div className="min-w-0 max-w-[calc(100vw-5.5rem)] overflow-x-auto pb-1 sm:max-w-none sm:overflow-visible sm:pb-0">
           <div className="flex min-w-max items-center gap-1.5 sm:gap-2">
-          <Dialog
-            open={authOpen}
-            onOpenChange={(open) => {
-              setAuthOpen(open);
-              if (!open) clearAuthForm();
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={
-                  isAnonymous
-                    ? 'h-8 px-2 text-xs sm:h-9 sm:px-3 glow-green bg-primary text-primary-foreground hover:bg-primary/90 border-0'
-                    : 'h-8 px-2 text-xs sm:h-9 sm:px-3 border border-primary/30 bg-primary/10 text-primary font-bold hover:bg-primary/20'
-                }
-              >
-                {isAnonymous ? 'Login' : 'Log Out'}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>{isAnonymous ? 'Login to Seed Planet' : 'Account'}</DialogTitle>
-                <DialogDescription>
-                  {isAnonymous
-                    ? 'Sign in to save your planet in the cloud.'
-                    : 'You are signed in and syncing your progress.'}
-                </DialogDescription>
-              </DialogHeader>
+            <Dialog
+              open={authOpen}
+              onOpenChange={(open) => {
+                setAuthOpen(open);
+                if (!open) clearAuthForm();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={
+                    isAnonymous
+                      ? 'h-8 px-2 text-xs sm:h-9 sm:px-3 glow-green bg-primary text-primary-foreground hover:bg-primary/90 border-0'
+                      : 'h-8 px-2 text-xs sm:h-9 sm:px-3 border border-primary/30 bg-primary/10 text-primary font-bold hover:bg-primary/20'
+                  }
+                >
+                  {isAnonymous ? 'Login' : 'Log Out'}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{isAnonymous ? 'Login to Seed Planet' : 'Account'}</DialogTitle>
+                  <DialogDescription>
+                    {isAnonymous
+                      ? 'Sign in to save your planet in the cloud.'
+                      : 'You are signed in and syncing your progress.'}
+                  </DialogDescription>
+                </DialogHeader>
 
-              {isAnonymous ? (
-                <div className="space-y-3">
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
-                    autoComplete="email"
-                    disabled={authPending}
-                  />
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    autoComplete="current-password"
-                    disabled={authPending}
-                  />
-                  {authError && (
-                    <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                      {authError}
-                    </p>
-                  )}
-                  <DialogFooter className="gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={handleSignUp}
-                      disabled={authPending || !email.trim() || password.length < 6}
-                    >
-                      {authPending ? 'Working...' : 'Sign up'}
-                    </Button>
-                    <Button
-                      onClick={handleSignIn}
-                      disabled={authPending || !email.trim() || password.length < 6}
-                    >
-                      {authPending ? 'Working...' : 'Sign in'}
-                    </Button>
-                  </DialogFooter>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
-                    Signed in as <span className="font-semibold">{user?.email ?? 'unknown user'}</span>
+                {isAnonymous ? (
+                  <div className="space-y-3">
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email"
+                      autoComplete="email"
+                      disabled={authPending}
+                    />
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Password"
+                      autoComplete="current-password"
+                      disabled={authPending}
+                    />
+                    {authError && (
+                      <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                        {authError}
+                      </p>
+                    )}
+                    <DialogFooter className="gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={handleSignUp}
+                        disabled={authPending || !email.trim() || password.length < 6}
+                      >
+                        {authPending ? 'Working...' : 'Sign up'}
+                      </Button>
+                      <Button
+                        onClick={handleSignIn}
+                        disabled={authPending || !email.trim() || password.length < 6}
+                      >
+                        {authPending ? 'Working...' : 'Sign in'}
+                      </Button>
+                    </DialogFooter>
                   </div>
-                  {authError && (
-                    <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                      {authError}
-                    </p>
-                  )}
-                  <DialogFooter>
-                    <Button variant="destructive" onClick={handleSignOut} disabled={authPending}>
-                      {authPending ? 'Signing out...' : 'Sign out'}
-                    </Button>
-                  </DialogFooter>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+                      Signed in as <span className="font-semibold">{user?.email ?? 'unknown user'}</span>
+                    </div>
+                    {authError && (
+                      <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                        {authError}
+                      </p>
+                    )}
+                    <DialogFooter>
+                      <Button variant="destructive" onClick={handleSignOut} disabled={authPending}>
+                        {authPending ? 'Signing out...' : 'Sign out'}
+                      </Button>
+                    </DialogFooter>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
 
-          {/* Today */}
-          <div className="stat-chip">
-            <Sparkles size={12} className="text-primary" />
-            <div className="text-center">
-              <div className="text-xs font-black text-gradient-primary leading-none sm:text-sm">{todayCompleted}/{habits.length}</div>
-              <div className="stat-label">Today</div>
-            </div>
-          </div>
-
-          {/* Current Streak */}
-          <div className="stat-chip">
-            <Flame size={12} className="text-streak-gold" />
-            <div className="text-center">
-              <div className="text-xs font-black text-gradient-gold leading-none sm:text-sm">{currentStreak}</div>
-              <div className="stat-label">Streak</div>
-            </div>
-          </div>
-
-          {/* Longest Streak — hidden on very small screens */}
-          <div className="stat-chip border-yellow-500/30 bg-yellow-500/10 hidden xs:flex sm:flex">
-            <Trophy size={12} className="text-yellow-400" />
-            <div className="text-center">
-              <div className="text-xs font-black text-yellow-300 leading-none sm:text-sm">{longestStreak}</div>
-              <div className="stat-label">Best</div>
-            </div>
-          </div>
-
-          {/* Total — hidden on mobile */}
-          <div className="stat-chip hidden sm:flex">
-            <span className="text-sm">🌟</span>
-            <div className="text-center">
-              <div className="text-sm font-black text-foreground leading-none">{totalCompletions}</div>
-              <div className="stat-label">Total</div>
-            </div>
-          </div>
-
-          {/* Active milestone badge — hidden on mobile */}
-          {prevMilestone && (
-            <div className="stat-chip border-primary/30 bg-primary/10 hidden md:flex">
-              <span className="text-sm">{prevMilestone.emoji}</span>
+            {/* Today */}
+            <div className="stat-chip">
+              <Sparkles size={12} className="text-primary" />
               <div className="text-center">
-                <div className="text-xs font-black text-primary leading-none">{prevMilestone.label}</div>
-                <div className="stat-label">{prevMilestone.description}</div>
+                <div className="text-xs font-black text-gradient-primary leading-none sm:text-sm">{todayCompleted}/{habits.length}</div>
+                <div className="stat-label">Today</div>
               </div>
             </div>
-          )}
 
-          <Button
-            variant="ghost"
-            onClick={handleShare}
-            className="flex items-center gap-1.5 rounded-full border border-border/40 bg-card/70 h-8 px-3 text-xs font-bold backdrop-blur-sm text-muted-foreground/80 hover:text-foreground hover:bg-card/90 transition-all hover:scale-105"
-            title="Share Planet"
-          >
-            <Share2 size={13} />
-            <span className="uppercase tracking-wider text-[10px]">Share</span>
-          </Button>
+            {/* Current Streak */}
+            <div className="stat-chip">
+              <Flame size={12} className="text-streak-gold" />
+              <div className="text-center">
+                <div className="text-xs font-black text-gradient-gold leading-none sm:text-sm">{currentStreak}</div>
+                <div className="stat-label">Streak</div>
+              </div>
+            </div>
+
+            {/* Longest Streak — hidden on very small screens */}
+            <div className="stat-chip border-yellow-500/30 bg-yellow-500/10 hidden xs:flex sm:flex">
+              <Trophy size={12} className="text-yellow-400" />
+              <div className="text-center">
+                <div className="text-xs font-black text-yellow-300 leading-none sm:text-sm">{longestStreak}</div>
+                <div className="stat-label">Best</div>
+              </div>
+            </div>
+
+            {/* Total — hidden on mobile */}
+            <div className="stat-chip hidden sm:flex">
+              <span className="text-sm">🌟</span>
+              <div className="text-center">
+                <div className="text-sm font-black text-foreground leading-none">{totalCompletions}</div>
+                <div className="stat-label">Total</div>
+              </div>
+            </div>
+
+            {/* Active milestone badge — hidden on mobile */}
+            {prevMilestone && (
+              <div className="stat-chip border-primary/30 bg-primary/10 hidden md:flex">
+                <span className="text-sm">{prevMilestone.emoji}</span>
+                <div className="text-center">
+                  <div className="text-xs font-black text-primary leading-none">{prevMilestone.label}</div>
+                  <div className="stat-label">{prevMilestone.description}</div>
+                </div>
+              </div>
+            )}
+
+            <Button
+              variant="ghost"
+              onClick={handleShare}
+              className="flex items-center gap-1.5 rounded-full border border-border/40 bg-card/70 h-8 px-3 text-xs font-bold backdrop-blur-sm text-muted-foreground/80 hover:text-foreground hover:bg-card/90 transition-all hover:scale-105"
+              title="Share Planet"
+            >
+              <Share2 size={13} />
+              <span className="uppercase tracking-wider text-[10px]">Share</span>
+            </Button>
 
           </div>
         </div>
@@ -568,10 +569,10 @@ const Index = () => {
                 >
                   🌱 Plant Your First Habit
                 </button>
-                
+
                 {(!user || isAnonymous) && (
                   <p className="mt-4 text-xs text-muted-foreground">
-                    <button 
+                    <button
                       onClick={() => setAuthOpen(true)}
                       className="text-primary hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
                     >
@@ -622,9 +623,8 @@ const Index = () => {
 
           {/* Drawer */}
           <div
-            className={`fixed bottom-0 left-0 right-0 z-40 flex flex-col rounded-t-3xl border-t border-border/40 bg-card/95 backdrop-blur-xl shadow-2xl transition-transform duration-300 ease-in-out ${
-              drawerOpen ? 'translate-y-0' : 'translate-y-[calc(100%-4rem)]'
-            }`}
+            className={`fixed bottom-0 left-0 right-0 z-40 flex flex-col rounded-t-3xl border-t border-border/40 bg-card/95 backdrop-blur-xl shadow-2xl transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-y-0' : 'translate-y-[calc(100%-4rem)]'
+              }`}
             style={{ maxHeight: '80vh' }}
           >
             {/* Drag handle + toggle */}
@@ -692,9 +692,8 @@ const Index = () => {
       {isAdmin && (
         <>
           <div
-            className={`fixed bottom-20 right-5 z-50 transition-all duration-300 sm:bottom-5 ${
-              showDevPanel ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-            }`}
+            className={`fixed bottom-20 right-5 z-50 transition-all duration-300 sm:bottom-5 ${showDevPanel ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+              }`}
           >
             <div className="rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-4 w-56">
               <div className="flex items-center justify-between mb-3">
@@ -728,8 +727,8 @@ const Index = () => {
                 <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-1.5">Simulate streak</p>
                 <div className="flex flex-col gap-1.5">
                   {([
-                    { days: 7,   label: '🌿 7 days',   hint: 'Bigger trees' },
-                    { days: 30,  label: '🦋 30 days',  hint: 'Animals appear' },
+                    { days: 7, label: '🌿 7 days', hint: 'Bigger trees' },
+                    { days: 30, label: '🦋 30 days', hint: 'Animals appear' },
                     { days: 100, label: '✨ 100 days', hint: 'Glow plants' },
                   ] as const).map(({ days, label, hint }) => (
                     <button

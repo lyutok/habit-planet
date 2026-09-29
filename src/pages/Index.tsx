@@ -230,7 +230,7 @@ const Index = () => {
       if (!ctx) return;
 
       // Fill with the app's dark blue background
-      ctx.fillStyle = '#0b1020';
+      ctx.fillStyle = '#010736';
       ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
       // Draw the planet scene over it

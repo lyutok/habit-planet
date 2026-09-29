@@ -243,7 +243,7 @@ const Index = () => {
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: 'Look at my planet!',
-          text: "I'm growing my planet by completing daily habits. Join me on Seed Planet! https://seedplanet.app",
+          text: "I'm growing my planet by completing daily habits. Join me on Seed Planet! https://seed-planet.page.dev",
           files: [file],
         });
       } else {

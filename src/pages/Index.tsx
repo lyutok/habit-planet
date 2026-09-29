@@ -550,7 +550,7 @@ const Index = () => {
           )}
 
           <Canvas
-            camera={{ position: [0, 1.5, 5.8], fov: 46 }}
+            camera={{ position: [0, 1.5, isMobile ? 7.5 : 5.8], fov: 46 }}
             shadows
             style={{ background: 'transparent' }}
             gl={{

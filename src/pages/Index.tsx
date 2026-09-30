@@ -563,16 +563,24 @@ const Index = () => {
                 </p>
 
                 {/* Milestone preview */}
-                <div className="mb-5 grid grid-cols-3 gap-2 text-left">
+                <div className="mb-5 grid grid-cols-3 gap-3">
                   {[
-                    { emoji: '🌿', days: '7 days', title: 'Week Warrior', desc: 'Trees grow' },
-                    { emoji: '🦋', days: '30 days', title: 'Month Master', desc: 'Animals appear' },
-                    { emoji: '✨', days: '100 days', title: 'Legend', desc: 'World evolves' },
+                    { image: '/image/7_days.png', days: '7 days', desc: 'Trees grow' },
+                    { image: '/image/30_days.png', days: '30 days', desc: 'Animals appear' },
+                    { image: '/image/100_days.png', days: '100 days', desc: 'World evolves' },
                   ].map(m => (
-                    <div key={m.days} className="rounded-2xl border border-border/30 bg-muted/30 px-2 py-2.5 flex flex-col items-center gap-1">
-                      <span className="text-xl">{m.emoji}</span>
-                      <span className="text-[10px] font-black text-primary leading-none">{m.days}</span>
-                      <span className="text-[10px] text-muted-foreground leading-tight text-center">{m.desc}</span>
+                    <div key={m.days} className="flex flex-col items-center gap-2">
+                      <div className="w-full aspect-square rounded-2xl border border-border/30 bg-muted/30 overflow-hidden shadow-sm">
+                        <img
+                          src={m.image}
+                          alt={`Seed Planet after ${m.days}`}
+                          className="w-full h-full object-cover rounded-2xl"
+                        />
+                      </div>
+                      <div className="flex flex-col items-center gap-0.5 text-center">
+                        <span className="text-[10px] font-black text-primary leading-none">{m.days}</span>
+                        <span className="text-[10px] text-muted-foreground leading-tight">{m.desc}</span>
+                      </div>
                     </div>
                   ))}
                 </div>

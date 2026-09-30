@@ -129,7 +129,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
 
       try {
         const [habitsRes, entriesRes, objectsRes] = await Promise.all([
-          supabase.from('habits').select('*').eq('user_id', userId),
+          supabase.from('habits').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
           supabase.from('habit_entries').select('*').eq('user_id', userId),
           supabase.from('planet_objects').select('*').eq('user_id', userId),
         ]);
@@ -263,6 +263,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
           name,
           icon,
           type,
+          created_at: newHabit.createdAt,
         });
 
         if (error) {

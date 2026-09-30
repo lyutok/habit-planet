@@ -31,7 +31,7 @@ function LoadingPlanet() {
   return (
     <div className="flex h-full items-center justify-center">
       <div className="text-center">
-        <div className="mb-3 text-4xl animate-spin">🌏</div>
+        <div className="mb-3 text-4xl animate-spin">🌱</div>
         <p className="text-sm text-muted-foreground">Growing your planet...</p>
       </div>
     </div>

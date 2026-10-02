@@ -313,10 +313,17 @@ const Index = () => {
                     </p>
                   </section>
 
-                  <section>
+                  <section className="mb-3">
                     <h3 className="mb-1 text-xs font-bold text-primary">Your progress</h3>
                     <p className="text-xs leading-relaxed text-muted-foreground">
                       Add habits for routines you want to build, then check each one off daily. Progress is saved on this device; sign in to sync it to your account.
+                    </p>
+                  </section>
+
+                  <section>
+                    <h3 className="mb-1 text-xs font-bold text-primary">Support</h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      Contact us at <a href="mailto:helloapps.studio@outlook.com" className="text-primary hover:underline">helloapps.studio@outlook.com</a>
                     </p>
                   </section>
                 </PopoverContent>

@@ -105,7 +105,7 @@ const Index = () => {
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [milestoneCelebration, setMilestoneCelebration] = useState<{ milestone: Milestone; habitName: string } | null>(null);
+  const [milestoneCelebration, setMilestoneCelebration] = useState<{ milestone: Milestone; habitName: string; habitId: string } | null>(null);
   const [streakReset, setStreakReset] = useState<{ lostStreak: number; habitName: string } | null>(null);
 
   const handleCompleteHabit = async (habitId: string) => {
@@ -126,7 +126,7 @@ const Index = () => {
     if (habit && wasStreakReset) {
       setStreakReset({ lostStreak: previousStreak, habitName: habit.name });
     } else if (habit && milestone) {
-      setMilestoneCelebration({ milestone, habitName: habit.name });
+      setMilestoneCelebration({ milestone, habitName: habit.name, habitId });
     }
   };
 
@@ -888,7 +888,12 @@ const Index = () => {
         <MilestoneCelebrationDialog
           milestone={milestoneCelebration.milestone}
           habitName={milestoneCelebration.habitName}
+          habitId={milestoneCelebration.habitId}
           onClose={() => setMilestoneCelebration(null)}
+          onDeleteHabit={async (id) => {
+            await deleteHabit(id);
+            setMilestoneCelebration(null);
+          }}
         />
       )}
 

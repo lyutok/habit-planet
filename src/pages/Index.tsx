@@ -26,6 +26,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 function LoadingPlanet() {
   return (
@@ -96,6 +104,7 @@ const Index = () => {
   const [showModal, setShowModal] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [milestoneCelebration, setMilestoneCelebration] = useState<{ milestone: Milestone; habitName: string } | null>(null);
   const [streakReset, setStreakReset] = useState<{ lostStreak: number; habitName: string } | null>(null);
 
@@ -217,6 +226,29 @@ const Index = () => {
     }
   };
 
+  const handleDeleteAccount = () => {
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleDeleteAccountConfirmed = async () => {
+    setConfirmDeleteOpen(false);
+    setAuthPending(true);
+    setAuthError(null);
+    try {
+      // Delete all data tables (cascade) + remove the auth user account
+      await resetAll();
+      clearLocalData();
+      await supabase.rpc('delete_current_user');
+      await signOut();
+      setAuthOpen(false);
+      clearAuthForm();
+    } catch (error) {
+      setAuthError(getReadableAuthError(error, 'Unable to delete account.'));
+    } finally {
+      setAuthPending(false);
+    }
+  };
+
   const handleShare = async () => {
     const canvas = document.querySelector('canvas');
     if (!canvas) return;
@@ -320,6 +352,20 @@ const Index = () => {
                     </p>
                   </section>
 
+                  <section className="mb-3">
+                    <h3 className="mb-1 text-xs font-bold text-primary">Clear all</h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      Removes all your habits and planet objects, resetting your world to a blank slate. Your account stays intact and you remain signed in — only the data is erased.
+                    </p>
+                  </section>
+
+                  <section className="mb-3">
+                    <h3 className="mb-1 text-xs font-bold text-destructive">Delete this account</h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      Permanently deletes your account and all associated data — habits, entries, and planet objects. You will be signed out immediately and this action cannot be undone.
+                    </p>
+                  </section>
+
                   <section>
                     <h3 className="mb-1 text-xs font-bold text-primary">Support</h3>
                     <p className="text-xs leading-relaxed text-muted-foreground">
@@ -415,8 +461,16 @@ const Index = () => {
                         {authError}
                       </p>
                     )}
-                    <DialogFooter>
-                      <Button variant="destructive" onClick={handleSignOut} disabled={authPending}>
+                    <DialogFooter className="sm:justify-between w-full mt-4">
+                      <Button variant="link" onClick={handleDeleteAccount} disabled={authPending} className="text-destructive hover:text-destructive/80 px-0">
+                        Delete this account
+                      </Button>
+                      <Button 
+                        variant="ghost"
+                        onClick={handleSignOut} 
+                        disabled={authPending}
+                        className="border border-primary/30 bg-primary/10 text-primary font-bold hover:bg-primary/20"
+                      >
                         {authPending ? 'Signing out...' : 'Sign out'}
                       </Button>
                     </DialogFooter>
@@ -845,6 +899,38 @@ const Index = () => {
           onClose={() => setStreakReset(null)}
         />
       )}
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent className="sm:max-w-sm border-destructive/30 bg-background">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 border border-destructive/20">
+                <Trash2 size={18} className="text-destructive" />
+              </div>
+              <AlertDialogTitle className="text-base font-bold">Delete account data?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-sm text-muted-foreground pl-[52px]">
+              Your account, all habits, entries and planet objects will be permanently deleted. You will be signed out and cannot undo this.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-2">
+            <Button
+              variant="ghost"
+              className="border border-border/50"
+              onClick={() => setConfirmDeleteOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccountConfirmed}
+              disabled={authPending}
+            >
+              {authPending ? 'Deleting...' : 'Delete everything'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

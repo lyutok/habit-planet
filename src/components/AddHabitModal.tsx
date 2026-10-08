@@ -11,15 +11,15 @@ interface AddHabitModalProps {
 }
 
 const PRESET_ICONS: Record<HabitType, string[]> = {
-  tree:     ['📚', '📖', '🎓', '🧠', '✏️', '🔬'],
-  flower:   ['🧘', '🌿', '💆', '🫁', '💜', '🕯️'],
-  mountain: ['🏃', '💪', '🚴', '🏋️', '⚽', '🥊', '🏊'],
-  building: ['💻', '🎯', '🔧', '🎨', '📊', '🚀'],
+  tree: ['📚', '💡', '🎓', '🎙️', '📝', '🔭'],
+  flower: ['🧘', '🌿', '🛁', '🍵', '💜', '🌙'],
+  mountain: ['🏃', '🚴', '🏋️', '⚽', '🏊', '🎾'],
+  building: ['💻', '🎯', '🔧', '🎨', '🚀', '⚙️'],
 };
 
 const TYPE_GRADIENTS: Record<HabitType, string> = {
-  tree:     'from-green-500/20 to-emerald-500/10 border-green-500/30',
-  flower:   'from-pink-500/20 to-fuchsia-500/10 border-pink-500/30',
+  tree: 'from-green-500/20 to-emerald-500/10 border-green-500/30',
+  flower: 'from-pink-500/20 to-fuchsia-500/10 border-pink-500/30',
   mountain: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30',
   building: 'from-green-500/20 to-emerald-500/10 border-green-500/30',
 };
@@ -89,11 +89,10 @@ export function AddHabitModal({ onClose, onAdd, disabled = false }: AddHabitModa
               <button
                 key={t}
                 onClick={() => handleTypeChange(t)}
-                className={`flex items-center gap-2.5 rounded-2xl border p-3 text-left transition-all bg-gradient-to-br ${
-                  type === t
-                    ? `${TYPE_GRADIENTS[t]} scale-[1.02] shadow-lg`
-                    : 'border-border/40 bg-muted/20 text-muted-foreground hover:border-border hover:bg-muted/40'
-                }`}
+                className={`flex items-center gap-2.5 rounded-2xl border p-3 text-left transition-all bg-gradient-to-br ${type === t
+                  ? `${TYPE_GRADIENTS[t]} scale-[1.02] shadow-lg`
+                  : 'border-border/40 bg-muted/20 text-muted-foreground hover:border-border hover:bg-muted/40'
+                  }`}
               >
                 <span className="text-2xl">{cfg.icon}</span>
                 <div>
@@ -115,11 +114,10 @@ export function AddHabitModal({ onClose, onAdd, disabled = false }: AddHabitModa
               <button
                 key={ic}
                 onClick={() => setIcon(ic)}
-                className={`flex h-10 w-10 items-center justify-center rounded-xl border text-xl transition-all ${
-                  icon === ic
-                    ? 'border-primary bg-primary/15 scale-110 shadow-md'
-                    : 'border-border/40 bg-muted/30 hover:border-primary/40 hover:scale-105 hover:bg-muted/60'
-                }`}
+                className={`flex h-10 w-10 items-center justify-center rounded-xl border text-xl transition-all ${icon === ic
+                  ? 'border-primary bg-primary/15 scale-110 shadow-md'
+                  : 'border-border/40 bg-muted/30 hover:border-primary/40 hover:scale-105 hover:bg-muted/60'
+                  }`}
               >
                 {ic}
               </button>

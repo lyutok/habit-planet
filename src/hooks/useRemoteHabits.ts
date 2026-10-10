@@ -170,7 +170,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
         name: h.name,
         icon: h.icon,
         type: h.type as HabitType,
-        streak: calculateStreak(h.id, dbEntries, todayForCalc),
+        streak: Math.max(h.streak ?? 0, calculateStreak(h.id, dbEntries, todayForCalc)),
         createdAt: h.created_at,
       }));
 
@@ -258,10 +258,13 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
     // (which would cause this effect to re-trigger every time it calls setHabits).
     const currentHabits = habitsRef.current;
     if (currentHabits.length === 0) return;
-    const nextHabits = currentHabits.map(habit => ({
-      ...habit,
-      streak: calculateStreak(habit.id, entries, currentDate),
-    }));
+    const nextHabits = currentHabits.map(habit => {
+      const calc = calculateStreak(habit.id, entries, currentDate);
+      return {
+        ...habit,
+        streak: Math.max(habit.streak ?? 0, calc),
+      };
+    });
     const changed = nextHabits.some((habit, index) => habit.streak !== currentHabits[index].streak);
     if (changed) {
       habitsRef.current = nextHabits;
@@ -270,7 +273,14 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   }, [entries, currentDate]);
 
   const isCompletedToday = useCallback((habitId: string) => {
-    return entries.some(e => e.habitId === habitId && String(e.date).split('T')[0] === currentDate && e.completed);
+    const todayStr = String(currentDate).split('T')[0];
+    const prevStr = previousDate(todayStr);
+    return entries.some(
+      e => e.habitId === habitId && e.completed && (
+        String(e.date).split('T')[0] === todayStr ||
+        String(e.date).split('T')[0] === prevStr
+      )
+    );
   }, [entries, currentDate]);
 
   const addHabit = useCallback(async (name: string, type: HabitType, icon: string) => {

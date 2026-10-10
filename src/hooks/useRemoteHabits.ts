@@ -125,91 +125,87 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   // Keep habitsRef in sync on every render (same pattern as currentDateRef).
   habitsRef.current = habits;
 
-  // Load data from Supabase on auth change
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  const loadFromDB = useCallback(async () => {
+    const revisionAtStart = dataRevision.current;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id ?? user?.id;
+
+    if (!isMountedRef.current) return;
+
+    if (!userId || isAnonymous) {
+      setHabits(load(HABITS_KEY, []));
+      setEntries(load(ENTRIES_KEY, []));
+      setPlanetObjects(load(PLANET_KEY, []));
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [habitsRes, entriesRes, objectsRes] = await Promise.all([
+        supabase.from('habits').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
+        supabase.from('habit_entries').select('*').eq('user_id', userId),
+        supabase.from('planet_objects').select('*').eq('user_id', userId),
+      ]);
+
+      if (habitsRes.error) throw habitsRes.error;
+      if (entriesRes.error) throw entriesRes.error;
+      if (objectsRes.error) throw objectsRes.error;
+
+      const dbEntries = entriesRes.data.map(e => ({
+        habitId: e.habit_id,
+        date: String(e.date).split('T')[0],
+        completed: e.completed,
+      }));
+
+      const todayForCalc = currentDateRef.current;
+      const dbHabits = habitsRes.data.map(h => ({
+        id: h.id,
+        name: h.name,
+        icon: h.icon,
+        type: h.type as HabitType,
+        streak: calculateStreak(h.id, dbEntries, todayForCalc),
+        createdAt: h.created_at,
+      }));
+
+      const dbObjects = objectsRes.data.map(o => ({
+        id: o.id,
+        habitId: o.habit_id ?? undefined,
+        type: o.type as HabitType,
+        subType: parseObjectSubType(o.sub_type),
+        position: [o.position_x, o.position_y, o.position_z] as [number, number, number],
+        scale: o.scale,
+        color: o.color,
+        rotation: o.rotation,
+        milestone: o.milestone,
+      }));
+
+      if (isMountedRef.current && !syncingSimulation.current && revisionAtStart === dataRevision.current) {
+        setHabits(dbHabits);
+        setEntries(dbEntries);
+        setPlanetObjects(dbObjects);
+      }
+    } catch (error) {
+      console.error('[RemoteHabits] Error loading from DB:', error);
+    } finally {
+      if (isMountedRef.current) setLoading(false);
+    }
+  }, [user?.id, isAnonymous]);
+
+  // Load data from Supabase on auth change and subscribe to live changes
   useEffect(() => {
     if (authLoading) {
       setLoading(true);
       return;
     }
 
-    let active = true;
-
-    const loadFromDB = async () => {
-      const revisionAtStart = dataRevision.current;
-      if (isAnonymous) {
-        if (!active) return;
-
-        // Anonymous mode starts from the local store; logout clears it first.
-        setHabits(load(HABITS_KEY, []));
-        setEntries(load(ENTRIES_KEY, []));
-        setPlanetObjects(load(PLANET_KEY, []));
-        setLoading(false);
-        return;
-      }
-
-      // Load from DB for authenticated users
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id ?? user?.id;
-      if (!active || !userId) return; // Safety check
-
-      try {
-        const [habitsRes, entriesRes, objectsRes] = await Promise.all([
-          supabase.from('habits').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
-          supabase.from('habit_entries').select('*').eq('user_id', userId),
-          supabase.from('planet_objects').select('*').eq('user_id', userId),
-        ]);
-
-        if (habitsRes.error) throw habitsRes.error;
-        if (entriesRes.error) throw entriesRes.error;
-        if (objectsRes.error) throw objectsRes.error;
-
-        const dbEntries = entriesRes.data.map(e => ({
-          habitId: e.habit_id,
-          date: String(e.date).split('T')[0],
-          completed: e.completed,
-        }));
-
-        // Read date via ref so this closure doesn't need currentDate as a dep
-        const todayForCalc = currentDateRef.current;
-        const dbHabits = habitsRes.data.map(h => ({
-          id: h.id,
-          name: h.name,
-          icon: h.icon,
-          type: h.type as HabitType,
-          streak: calculateStreak(h.id, dbEntries, todayForCalc),
-          createdAt: h.created_at,
-        }));
-
-        const dbObjects = objectsRes.data.map(o => ({
-          id: o.id,
-          habitId: o.habit_id ?? undefined,
-          type: o.type as HabitType,
-          subType: parseObjectSubType(o.sub_type),
-          position: [o.position_x, o.position_y, o.position_z] as [number, number, number],
-          scale: o.scale,
-          color: o.color,
-          rotation: o.rotation,
-          milestone: o.milestone,
-        }));
-
-        if (active && !syncingSimulation.current && revisionAtStart === dataRevision.current) {
-          setHabits(dbHabits);
-          setEntries(dbEntries);
-          setPlanetObjects(dbObjects);
-        }
-      } catch (error) {
-        console.error('[RemoteHabits] Error loading from DB:', error);
-        if (active) {
-          setHabits([]);
-          setEntries([]);
-          setPlanetObjects([]);
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    loadFromDB();
+    void loadFromDB();
 
     if (isAnonymous) return;
 
@@ -245,16 +241,12 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
       : null;
 
     return () => {
-      active = false;
       window.clearInterval(refreshInterval);
       window.removeEventListener('focus', refreshOnReturn);
       document.removeEventListener('visibilitychange', refreshOnReturn);
       if (channel) void supabase.removeChannel(channel);
     };
-    // NOTE: currentDate and getCurrentUserId intentionally excluded from deps.
-    // currentDate is read via currentDateRef; getCurrentUserId changes reference
-    // on every auth update which would restart the polling interval needlessly.
-  }, [user?.id, isAnonymous, authLoading]);
+  }, [authLoading, isAnonymous, loadFromDB, user?.id]);
 
   // Save to localStorage for anonymous users
   useEffect(() => { if (isAnonymous) localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }, [habits, isAnonymous]);

@@ -63,7 +63,7 @@ export function calculateStreak(habitId: string, entries: HabitEntry[], today: s
   const completedDates = new Set(
     entries
       .filter(entry => entry.habitId === habitId && entry.completed)
-      .map(entry => entry.date.split('T')[0]),
+      .map(entry => String(entry.date).split('T')[0]),
   );
 
   const todayStr = today.split('T')[0];
@@ -146,7 +146,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
 
         const dbEntries = entriesRes.data.map(e => ({
           habitId: e.habit_id,
-          date: e.date.split('T')[0],
+          date: String(e.date).split('T')[0],
           completed: e.completed,
         }));
 
@@ -223,7 +223,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   }, [entries, habits, currentDate]);
 
   const isCompletedToday = useCallback((habitId: string) => {
-    return entries.some(e => e.habitId === habitId && e.date.split('T')[0] === currentDate && e.completed);
+    return entries.some(e => e.habitId === habitId && String(e.date).split('T')[0] === currentDate && e.completed);
   }, [entries, currentDate]);
 
   const addHabit = useCallback(async (name: string, type: HabitType, icon: string) => {
@@ -344,7 +344,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
       if (entriesError) throw entriesError;
       completionHistory = persistedEntries.map(entry => ({
         habitId,
-        date: entry.date.split('T')[0],
+        date: String(entry.date).split('T')[0],
         completed: entry.completed,
       }));
     }

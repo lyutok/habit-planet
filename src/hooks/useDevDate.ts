@@ -8,6 +8,19 @@ function loadOffset(): number {
   } catch { return 0; }
 }
 
+export function getLocalDateString(dateObj: Date = new Date()): string {
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function addDaysToDateString(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d + days));
+  return date.toISOString().split('T')[0];
+}
+
 export function useDevDate() {
   const [dayOffset, setDayOffset] = useState<number>(loadOffset);
   const [databaseDate, setDatabaseDate] = useState<string | null>(null);
@@ -35,10 +48,10 @@ export function useDevDate() {
 
   /** Returns today's date string offset by dayOffset days */
   const getToday = useCallback((): string => {
-    const d = new Date(databaseDate ?? new Date().toISOString().split('T')[0]);
-    d.setDate(d.getDate() + dayOffset);
-    return d.toISOString().split('T')[0];
+    const baseDate = databaseDate ?? getLocalDateString();
+    return addDaysToDateString(baseDate, dayOffset);
   }, [databaseDate, dayOffset]);
 
   return { dayOffset, advanceDay, resetOffset, getToday, jumpDays, databaseDate, setDatabaseDate };
 }
+

@@ -221,11 +221,35 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
     window.addEventListener('focus', refreshOnReturn);
     document.addEventListener('visibilitychange', refreshOnReturn);
 
+    // Setup Supabase Realtime channel for instant cross-device sync
+    const currentUserId = user?.id;
+    const channel = currentUserId
+      ? supabase
+          .channel(`user-sync-${currentUserId}`)
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'habits', filter: `user_id=eq.${currentUserId}` },
+            () => { void loadFromDB(); },
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'habit_entries', filter: `user_id=eq.${currentUserId}` },
+            () => { void loadFromDB(); },
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'planet_objects', filter: `user_id=eq.${currentUserId}` },
+            () => { void loadFromDB(); },
+          )
+          .subscribe()
+      : null;
+
     return () => {
       active = false;
       window.clearInterval(refreshInterval);
       window.removeEventListener('focus', refreshOnReturn);
       document.removeEventListener('visibilitychange', refreshOnReturn);
+      if (channel) void supabase.removeChannel(channel);
     };
     // NOTE: currentDate and getCurrentUserId intentionally excluded from deps.
     // currentDate is read via currentDateRef; getCurrentUserId changes reference
@@ -301,6 +325,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
           icon,
           type,
           created_at: newHabit.createdAt,
+          updated_at: newHabit.createdAt,
         });
 
         if (error) {
@@ -348,22 +373,22 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
     const newEntry = { habitId, date: t, completed: true };
 
     if (isAnonymous) {
-      setEntries(prev => [...prev, newEntry]);
+      setEntries(prev => [...prev.filter(e => !(e.habitId === habitId && e.date === t)), newEntry]);
     } else {
-      const { error } = await supabase.from('habit_entries').insert({
+      const { error } = await supabase.from('habit_entries').upsert({
         habit_id: habitId,
         user_id: currentUserId,
         date: t,
         completed: true,
-      });
+      }, { onConflict: 'habit_id,date' });
       if (error) throw error;
-      setEntries(prev => [...prev, newEntry]);
+      setEntries(prev => [...prev.filter(e => !(e.habitId === habitId && e.date === t)), newEntry]);
     }
 
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
 
-    let completionHistory = [...entries, newEntry];
+    let completionHistory = [...entries.filter(e => !(e.habitId === habitId && e.date === t)), newEntry];
     if (!isAnonymous) {
       const { data: persistedEntries, error: entriesError } = await supabase
         .from('habit_entries')
@@ -394,7 +419,10 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
       if (isSimulatedDate || (!laterEntriesError && laterEntries.length === 0)) {
         const { error } = await supabase
           .from('habits')
-          .update({ streak: newStreak })
+          .update({
+            streak: newStreak,
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', habitId)
           .eq('user_id', currentUserId);
         if (error && error.code !== 'PGRST204') throw error;
@@ -576,6 +604,8 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
             icon: habit.icon,
             type: habit.type,
             streak: calculateStreak(habit.id, [...entries, ...newEntries], finalDate),
+            created_at: habit.createdAt,
+            updated_at: new Date().toISOString(),
           })),
           { onConflict: 'id' },
         );

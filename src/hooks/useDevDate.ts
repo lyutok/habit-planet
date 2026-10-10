@@ -23,7 +23,6 @@ function addDaysToDateString(dateStr: string, days: number): string {
 
 export function useDevDate() {
   const [dayOffset, setDayOffset] = useState<number>(loadOffset);
-  const [databaseDate, setDatabaseDate] = useState<string | null>(null);
 
   const advanceDay = useCallback(() => {
     setDayOffset(prev => {
@@ -48,10 +47,10 @@ export function useDevDate() {
 
   /** Returns today's date string offset by dayOffset days */
   const getToday = useCallback((): string => {
-    const baseDate = databaseDate ?? getLocalDateString();
-    return addDaysToDateString(baseDate, dayOffset);
-  }, [databaseDate, dayOffset]);
+    return addDaysToDateString(getLocalDateString(), dayOffset);
+  }, [dayOffset]);
 
-  return { dayOffset, advanceDay, resetOffset, getToday, jumpDays, databaseDate, setDatabaseDate };
+  return { dayOffset, advanceDay, resetOffset, getToday, jumpDays };
 }
+
 

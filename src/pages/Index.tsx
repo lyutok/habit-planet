@@ -47,7 +47,7 @@ function LoadingPlanet() {
 }
 
 const Index = () => {
-  const { dayOffset, advanceDay, resetOffset, getToday, jumpDays, databaseDate, setDatabaseDate } = useDevDate();
+  const { dayOffset, advanceDay, resetOffset, getToday, jumpDays } = useDevDate();
   const [showDevPanel, setShowDevPanel] = useState(false);
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -62,20 +62,6 @@ const Index = () => {
   });
 
   const { user, isAnonymous, signIn, signUp, signOut, isAdmin } = useAuth();
-
-  useEffect(() => {
-    if (!user || isAnonymous) {
-      setDatabaseDate(null);
-      return;
-    }
-
-    let active = true;
-    supabase.rpc('get_database_date').then(({ data, error }) => {
-      if (active && !error && data) setDatabaseDate(data);
-    });
-
-    return () => { active = false; };
-  }, [user, isAnonymous, setDatabaseDate]);
 
   const effectiveToday = useCallback(
     () => getToday(),

@@ -117,6 +117,9 @@ export function useAuth() {
       password,
     });
     if (error) throw error;
+    if (data.user) {
+      await migrateAnonymousData(data.user.id);
+    }
     return data;
   };
 
@@ -157,7 +160,7 @@ const migrateAnonymousData = async (newUserId: string) => {
     const objects = loadObjects();
 
     if (habits.length > 0) {
-      // Insert habits with new user_id
+      // Upsert habits with new user_id
       const habitsToInsert = habits.map(h => ({
         id: h.id,
         user_id: newUserId,
@@ -167,24 +170,24 @@ const migrateAnonymousData = async (newUserId: string) => {
         created_at: h.createdAt,
         updated_at: new Date().toISOString(),
       }));
-      const { error: habitsError } = await supabase.from('habits').insert(habitsToInsert);
-      if (habitsError) throw habitsError;
+      const { error: habitsError } = await supabase.from('habits').upsert(habitsToInsert, { onConflict: 'id' });
+      if (habitsError) console.warn('[Auth] habits migration warning:', habitsError);
     }
 
     if (entries.length > 0) {
-      // Insert entries with new user_id
+      // Upsert entries with new user_id
       const entriesToInsert = entries.map(e => ({
         habit_id: e.habitId,
         user_id: newUserId,
         date: e.date,
         completed: e.completed,
       }));
-      const { error: entriesError } = await supabase.from('habit_entries').insert(entriesToInsert);
-      if (entriesError) throw entriesError;
+      const { error: entriesError } = await supabase.from('habit_entries').upsert(entriesToInsert, { onConflict: 'habit_id,date' });
+      if (entriesError) console.warn('[Auth] entries migration warning:', entriesError);
     }
 
     if (objects.length > 0) {
-      // Insert objects with new user_id
+      // Upsert objects with new user_id
       const objectsToInsert = objects.map(o => ({
         id: o.id,
         user_id: newUserId,
@@ -199,8 +202,8 @@ const migrateAnonymousData = async (newUserId: string) => {
         rotation: o.rotation,
         milestone: o.milestone,
       }));
-      const { error: objectsError } = await supabase.from('planet_objects').insert(objectsToInsert);
-      if (objectsError) throw objectsError;
+      const { error: objectsError } = await supabase.from('planet_objects').upsert(objectsToInsert, { onConflict: 'id' });
+      if (objectsError) console.warn('[Auth] objects migration warning:', objectsError);
     }
 
     // Clear localStorage after successful migration
@@ -211,7 +214,7 @@ const migrateAnonymousData = async (newUserId: string) => {
 
   } catch (error) {
     console.error('Migration failed:', error);
-    // Don't throw; let sign-up succeed even if migration fails
+    // Don't throw; let sign-in/up succeed even if migration fails
   }
 };
 

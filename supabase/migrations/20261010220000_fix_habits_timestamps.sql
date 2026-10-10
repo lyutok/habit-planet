@@ -19,3 +19,15 @@ create trigger set_habits_updated_at
   before update on public.habits
   for each row
   execute function public.handle_habits_updated_at();
+
+-- Enable Supabase Realtime broadcasting for habits, habit_entries, and planet_objects
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    alter publication supabase_realtime add table public.habits;
+    alter publication supabase_realtime add table public.habit_entries;
+    alter publication supabase_realtime add table public.planet_objects;
+  end if;
+exception when others then
+  null;
+end $$;

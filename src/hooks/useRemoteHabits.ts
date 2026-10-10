@@ -105,6 +105,12 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   const todayFn = useCallback(() => getToday ? getToday() : new Date().toISOString().split('T')[0], [getToday]);
   const currentDate = todayFn();
 
+  // Keep a ref so loadFromDB can always read the latest date without
+  // being listed as a useEffect dependency (which caused an infinite
+  // re-render / polling loop on desktop browsers).
+  const currentDateRef = useRef(currentDate);
+  currentDateRef.current = currentDate;
+
   const [habits, setHabits] = useState<Habit[]>(() => load(HABITS_KEY, []));
   const [entries, setEntries] = useState<HabitEntry[]>(() => load(ENTRIES_KEY, []));
   const [planetObjects, setPlanetObjects] = useState<PlanetObject[]>(() => load(PLANET_KEY, []));
@@ -158,12 +164,14 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
           completed: e.completed,
         }));
 
+        // Read date via ref so this closure doesn't need currentDate as a dep
+        const todayForCalc = currentDateRef.current;
         const dbHabits = habitsRes.data.map(h => ({
           id: h.id,
           name: h.name,
           icon: h.icon,
           type: h.type as HabitType,
-          streak: calculateStreak(h.id, dbEntries, currentDate),
+          streak: calculateStreak(h.id, dbEntries, todayForCalc),
           createdAt: h.created_at,
         }));
 
@@ -214,7 +222,10 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
       window.removeEventListener('focus', refreshOnReturn);
       document.removeEventListener('visibilitychange', refreshOnReturn);
     };
-  }, [user?.id, isAnonymous, authLoading, getCurrentUserId, currentDate]);
+    // NOTE: currentDate intentionally excluded from deps — it's read via
+    // currentDateRef inside loadFromDB so the interval never restarts
+    // just because the date string was recalculated on a re-render.
+  }, [user?.id, isAnonymous, authLoading, getCurrentUserId]);
 
   // Save to localStorage for anonymous users
   useEffect(() => { if (isAnonymous) localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }, [habits, isAnonymous]);

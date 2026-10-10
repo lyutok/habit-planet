@@ -119,6 +119,11 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   const [loading, setLoading] = useState(true);
   const syncingSimulation = useRef(false);
   const dataRevision = useRef(0);
+  // Ref to latest habits so the streak-recalc effect can read them without
+  // listing `habits` as a dependency (which caused an infinite update loop).
+  const habitsRef = useRef<Habit[]>([]);
+  // Keep habitsRef in sync on every render (same pattern as currentDateRef).
+  habitsRef.current = habits;
 
   // Load data from Supabase on auth change
   useEffect(() => {
@@ -222,10 +227,10 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
       window.removeEventListener('focus', refreshOnReturn);
       document.removeEventListener('visibilitychange', refreshOnReturn);
     };
-    // NOTE: currentDate intentionally excluded from deps — it's read via
-    // currentDateRef inside loadFromDB so the interval never restarts
-    // just because the date string was recalculated on a re-render.
-  }, [user?.id, isAnonymous, authLoading, getCurrentUserId]);
+    // NOTE: currentDate and getCurrentUserId intentionally excluded from deps.
+    // currentDate is read via currentDateRef; getCurrentUserId changes reference
+    // on every auth update which would restart the polling interval needlessly.
+  }, [user?.id, isAnonymous, authLoading]);
 
   // Save to localStorage for anonymous users
   useEffect(() => { if (isAnonymous) localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }, [habits, isAnonymous]);
@@ -233,13 +238,20 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   useEffect(() => { if (isAnonymous) localStorage.setItem(PLANET_KEY, JSON.stringify(planetObjects)); }, [planetObjects, isAnonymous]);
 
   useEffect(() => {
-    const nextHabits = habits.map(habit => ({
+    // Read latest habits via ref to avoid having `habits` as a dep
+    // (which would cause this effect to re-trigger every time it calls setHabits).
+    const currentHabits = habitsRef.current;
+    if (currentHabits.length === 0) return;
+    const nextHabits = currentHabits.map(habit => ({
       ...habit,
       streak: calculateStreak(habit.id, entries, currentDate),
     }));
-    const changed = nextHabits.some((habit, index) => habit.streak !== habits[index].streak);
-    if (changed) setHabits(nextHabits);
-  }, [entries, habits, currentDate]);
+    const changed = nextHabits.some((habit, index) => habit.streak !== currentHabits[index].streak);
+    if (changed) {
+      habitsRef.current = nextHabits;
+      setHabits(nextHabits);
+    }
+  }, [entries, currentDate]);
 
   const isCompletedToday = useCallback((habitId: string) => {
     return entries.some(e => e.habitId === habitId && String(e.date).split('T')[0] === currentDate && e.completed);

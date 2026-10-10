@@ -133,13 +133,11 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
 
   const loadFromDB = useCallback(async () => {
     const revisionAtStart = dataRevision.current;
-
-    const { data: { session } } = await supabase.auth.getSession();
-    const userId = session?.user?.id ?? user?.id;
+    const currentUserId = user?.id;
 
     if (!isMountedRef.current) return;
 
-    if (!userId || isAnonymous) {
+    if (isAnonymous || !currentUserId) {
       setHabits(load(HABITS_KEY, []));
       setEntries(load(ENTRIES_KEY, []));
       setPlanetObjects(load(PLANET_KEY, []));
@@ -149,9 +147,9 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
 
     try {
       const [habitsRes, entriesRes, objectsRes] = await Promise.all([
-        supabase.from('habits').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
-        supabase.from('habit_entries').select('*').eq('user_id', userId),
-        supabase.from('planet_objects').select('*').eq('user_id', userId),
+        supabase.from('habits').select('*').eq('user_id', currentUserId).order('created_at', { ascending: true }),
+        supabase.from('habit_entries').select('*').eq('user_id', currentUserId),
+        supabase.from('planet_objects').select('*').eq('user_id', currentUserId),
       ]);
 
       if (habitsRes.error) throw habitsRes.error;
@@ -209,6 +207,11 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
     void loadFromDB();
 
     if (isAnonymous) return;
+
+    // Clear local cache when logged in so anonymous cache won't persist stale entries
+    localStorage.removeItem(HABITS_KEY);
+    localStorage.removeItem(ENTRIES_KEY);
+    localStorage.removeItem(PLANET_KEY);
 
     const refreshOnReturn = () => {
       if (document.visibilityState === 'visible') void loadFromDB();
@@ -297,92 +300,79 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   }, [entries, currentDate, habits]);
 
   const addHabit = useCallback(async (name: string, type: HabitType, icon: string) => {
-    console.log('[addHabit] Starting addHabit function');
-    const currentUserId = getCurrentUserId();
-    console.log('[addHabit] Current auth state:', { currentUserId, isAnonymous, user: user?.id });
+    const currentUserId = user?.id;
+    const nowIso = new Date().toISOString();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    const hasValidSession = !!session && !!session.user && !!session.user.id;
-    console.log('[addHabit] Session check:', { hasValidSession, sessionExists: !!session, userExists: !!session?.user, userIdExists: !!session?.user?.id });
-    console.log('[addHabit] Session user ID:', session?.user?.id);
-    console.log('[addHabit] Auth state user ID:', user?.id);
-
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    console.log('[addHabit] getUser() result:', currentUser ? { id: currentUser.id, email: currentUser.email } : null);
-
-    const newHabit = {
+    const newHabit: Habit = {
       id: uid(),
       name,
       icon,
       type,
       streak: 0,
-      createdAt: new Date().toISOString(),
+      createdAt: nowIso,
+      updatedAt: nowIso,
     };
 
-    if (hasValidSession) {
-      console.log('[addHabit] User has valid session, saving to DB');
-      const sessionUserId = session?.user?.id;
-      const authUserId = getCurrentUserId();
-      const userIdToUse = currentUser?.id || sessionUserId || authUserId;
-      console.log('[addHabit] Using user ID:', userIdToUse);
+    if (!isAnonymous && currentUserId) {
+      const { error } = await supabase.from('habits').insert({
+        id: newHabit.id,
+        user_id: currentUserId,
+        name,
+        icon,
+        type,
+        streak: 0,
+        created_at: newHabit.createdAt,
+        updated_at: newHabit.updatedAt,
+      });
 
-      if (!userIdToUse) {
-        console.log('[addHabit] No user ID available, skipping');
+      if (error) {
+        console.error('[addHabit] DB insertion error:', error);
         return;
       }
-
-      try {
-        console.log('[addHabit] About to insert with user_id:', userIdToUse, 'type:', typeof userIdToUse);
-        const { error, data } = await supabase.from('habits').insert({
-          id: newHabit.id,
-          user_id: userIdToUse,
-          name,
-          icon,
-          type,
-          created_at: newHabit.createdAt,
-          updated_at: newHabit.createdAt,
-        });
-
-        if (error) {
-          console.error('[addHabit] DB insertion error:', error);
-          throw error;
-        }
-
-        console.log('[addHabit] DB insertion successful:', data);
-        setHabits(prev => [...prev, newHabit]);
-        console.log('[addHabit] Local state updated');
-      } catch (err) {
-        console.error('[addHabit] Exception during DB insertion:', err);
-        setHabits(prev => [...prev, newHabit]);
-      }
-    } else {
-      console.log('[addHabit] No valid session, saving locally');
-      setHabits(prev => [...prev, newHabit]);
     }
-  }, [getCurrentUserId, isAnonymous, user]);
+
+    setHabits(prev => [...prev, newHabit]);
+  }, [isAnonymous, user?.id]);
 
   const deleteHabit = useCallback(async (habitId: string) => {
-    if (!isAnonymous) {
+    const currentUserId = user?.id;
+
+    if (!isAnonymous && currentUserId) {
       const { error: objectsError } = await supabase
         .from('planet_objects')
         .delete()
-        .eq('habit_id', habitId);
-      if (objectsError) throw objectsError;
+        .eq('habit_id', habitId)
+        .eq('user_id', currentUserId);
+      if (objectsError) console.error('[deleteHabit] error deleting planet_objects:', objectsError);
 
-      const { error } = await supabase.from('habits').delete().eq('id', habitId);
-      if (error) throw error;
+      const { error: entriesError } = await supabase
+        .from('habit_entries')
+        .delete()
+        .eq('habit_id', habitId)
+        .eq('user_id', currentUserId);
+      if (entriesError) console.error('[deleteHabit] error deleting habit_entries:', entriesError);
+
+      const { error } = await supabase
+        .from('habits')
+        .delete()
+        .eq('id', habitId)
+        .eq('user_id', currentUserId);
+      if (error) {
+        console.error('[deleteHabit] error deleting habit:', error);
+        return;
+      }
     }
+
     setHabits(prev => prev.filter(h => h.id !== habitId));
     setEntries(prev => prev.filter(e => e.habitId !== habitId));
     setPlanetObjects(prev => prev.filter(object => object.habitId !== habitId));
-  }, [isAnonymous]);
+  }, [isAnonymous, user?.id]);
 
   const completeHabit = useCallback(async (habitId: string) => {
     if (isCompletedToday(habitId)) return;
 
     const t = todayFn();
-    const { data: { session } } = await supabase.auth.getSession();
-    const currentUserId = isAnonymous ? getCurrentUserId() : session?.user?.id ?? user?.id;
+    const currentUserId = isAnonymous ? getCurrentUserId() : user?.id;
     if (!currentUserId) return;
 
     const newEntry = { habitId, date: t, completed: true };

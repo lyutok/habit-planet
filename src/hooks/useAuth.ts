@@ -167,7 +167,7 @@ const migrateAnonymousData = async (newUserId: string) => {
         name: h.name,
         icon: h.icon,
         type: h.type,
-        created_at: h.createdAt,
+        created_at: h.createdAt || new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }));
       const { error: habitsError } = await supabase.from('habits').upsert(habitsToInsert, { onConflict: 'id' });
@@ -205,16 +205,14 @@ const migrateAnonymousData = async (newUserId: string) => {
       const { error: objectsError } = await supabase.from('planet_objects').upsert(objectsToInsert, { onConflict: 'id' });
       if (objectsError) console.warn('[Auth] objects migration warning:', objectsError);
     }
-
-    // Clear localStorage after successful migration
+  } catch (error) {
+    console.error('Migration failed:', error);
+  } finally {
+    // Always clear localStorage after migration attempt
     localStorage.removeItem(HABITS_KEY);
     localStorage.removeItem(ENTRIES_KEY);
     localStorage.removeItem(PLANET_KEY);
-    localStorage.removeItem('anonymous_user_id'); // Clear anonymous ID too
-
-  } catch (error) {
-    console.error('Migration failed:', error);
-    // Don't throw; let sign-in/up succeed even if migration fails
+    localStorage.removeItem('anonymous_user_id');
   }
 };
 

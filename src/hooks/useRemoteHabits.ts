@@ -172,6 +172,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
         type: h.type as HabitType,
         streak: Math.max(h.streak ?? 0, calculateStreak(h.id, dbEntries, todayForCalc)),
         createdAt: h.created_at,
+        updatedAt: h.updated_at,
       }));
 
       const dbObjects = objectsRes.data.map(o => ({
@@ -273,15 +274,27 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   }, [entries, currentDate]);
 
   const isCompletedToday = useCallback((habitId: string) => {
-    const todayStr = String(currentDate).split('T')[0];
-    const prevStr = previousDate(todayStr);
-    return entries.some(
-      e => e.habitId === habitId && e.completed && (
-        String(e.date).split('T')[0] === todayStr ||
-        String(e.date).split('T')[0] === prevStr
-      )
-    );
-  }, [entries, currentDate]);
+    const normalize = (val?: string) => val ? String(val).trim().split('T')[0].split(' ')[0] : '';
+    const todayNorm = normalize(currentDate);
+    const prevNorm = previousDate(todayNorm);
+
+    // Check 1: Completed entry in habit_entries for today or previous day
+    const hasMatchingEntry = entries.some(e => {
+      if (String(e.habitId) !== String(habitId) || !e.completed) return false;
+      const entryDateNorm = normalize(e.date);
+      return entryDateNorm === todayNorm || entryDateNorm === prevNorm;
+    });
+    if (hasMatchingEntry) return true;
+
+    // Check 2: Habit streak > 0 and updated_at on habits table is today
+    const targetHabit = habits.find(h => String(h.id) === String(habitId));
+    if (targetHabit && targetHabit.streak > 0 && targetHabit.updatedAt) {
+      const habitUpdatedNorm = normalize(targetHabit.updatedAt);
+      if (habitUpdatedNorm === todayNorm) return true;
+    }
+
+    return false;
+  }, [entries, currentDate, habits]);
 
   const addHabit = useCallback(async (name: string, type: HabitType, icon: string) => {
     console.log('[addHabit] Starting addHabit function');

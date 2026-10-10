@@ -27,6 +27,7 @@ export interface Habit {
   type: HabitType;
   streak: number;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface HabitEntry {

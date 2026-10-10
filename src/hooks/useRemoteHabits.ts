@@ -48,9 +48,14 @@ function load<T>(key: string, fallback: T): T {
 }
 
 function previousDate(date: string): string {
-  const value = new Date(`${date}T00:00:00Z`);
-  value.setUTCDate(value.getUTCDate() - 1);
-  return value.toISOString().split('T')[0];
+  try {
+    const value = new Date(`${date}T00:00:00Z`);
+    if (isNaN(value.getTime())) return '';
+    value.setUTCDate(value.getUTCDate() - 1);
+    return value.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
 }
 
 function addDays(date: string, days: number): string {
@@ -60,13 +65,16 @@ function addDays(date: string, days: number): string {
 }
 
 export function calculateStreak(habitId: string, entries: HabitEntry[], today: string): number {
+  if (!today) return 0;
+
   const completedDates = new Set(
     entries
-      .filter(entry => entry.habitId === habitId && entry.completed)
-      .map(entry => String(entry.date).split('T')[0]),
+      .filter(entry => entry.habitId === habitId && entry.completed && entry.date)
+      .map(entry => String(entry.date).split('T')[0])
+      .filter(d => d !== 'undefined' && d !== 'null' && d !== ''),
   );
 
-  const todayStr = today.split('T')[0];
+  const todayStr = String(today).split('T')[0];
 
   const latestCompletedDate = [...completedDates]
     .filter(date => date <= todayStr)

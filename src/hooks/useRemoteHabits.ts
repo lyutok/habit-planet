@@ -63,14 +63,20 @@ export function calculateStreak(habitId: string, entries: HabitEntry[], today: s
   const completedDates = new Set(
     entries
       .filter(entry => entry.habitId === habitId && entry.completed)
-      .map(entry => entry.date),
+      .map(entry => entry.date.split('T')[0]),
   );
 
+  const todayStr = today.split('T')[0];
+
   const latestCompletedDate = [...completedDates]
-    .filter(date => date <= today)
+    .filter(date => date <= todayStr)
     .sort()
     .at(-1);
   if (!latestCompletedDate) return 0;
+
+  if (latestCompletedDate !== todayStr && latestCompletedDate !== previousDate(todayStr)) {
+    return 0; // Streak is broken
+  }
 
   let streak = 0;
   let date = latestCompletedDate;

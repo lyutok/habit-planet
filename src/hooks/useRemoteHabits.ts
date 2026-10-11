@@ -47,6 +47,13 @@ function load<T>(key: string, fallback: T): T {
   } catch { return fallback; }
 }
 
+function getLocalDateString(dateObj: Date = new Date()): string {
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function previousDate(date: string): string {
   try {
     const value = new Date(`${date}T00:00:00Z`);
@@ -102,7 +109,7 @@ interface UseRemoteHabitsOptions {
 
 export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemoteHabitsOptions = {}) {
   const { user, isAnonymous, loading: authLoading, getCurrentUserId } = useAuth();
-  const todayFn = useCallback(() => getToday ? getToday() : new Date().toISOString().split('T')[0], [getToday]);
+  const todayFn = useCallback(() => getToday ? getToday() : getLocalDateString(), [getToday]);
   const currentDate = todayFn();
 
   // Keep a ref so loadFromDB can always read the latest date without
@@ -279,25 +286,13 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   const isCompletedToday = useCallback((habitId: string) => {
     const normalize = (val?: string) => val ? String(val).trim().split('T')[0].split(' ')[0] : '';
     const todayNorm = normalize(currentDate);
-    const prevNorm = previousDate(todayNorm);
 
-    // Check 1: Completed entry in habit_entries for today or previous day
-    const hasMatchingEntry = entries.some(e => {
+    return entries.some(e => {
       if (String(e.habitId) !== String(habitId) || !e.completed) return false;
       const entryDateNorm = normalize(e.date);
-      return entryDateNorm === todayNorm || entryDateNorm === prevNorm;
+      return entryDateNorm === todayNorm;
     });
-    if (hasMatchingEntry) return true;
-
-    // Check 2: Habit streak > 0 and updated_at on habits table is today
-    const targetHabit = habits.find(h => String(h.id) === String(habitId));
-    if (targetHabit && targetHabit.streak > 0 && targetHabit.updatedAt) {
-      const habitUpdatedNorm = normalize(targetHabit.updatedAt);
-      if (habitUpdatedNorm === todayNorm) return true;
-    }
-
-    return false;
-  }, [entries, currentDate, habits]);
+  }, [entries, currentDate]);
 
   const addHabit = useCallback(async (name: string, type: HabitType, icon: string) => {
     const currentUserId = user?.id;

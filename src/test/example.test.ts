@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculateStreak } from "@/hooks/useRemoteHabits";
+import { calculateHistoricalStreak, calculateLongestStreak, calculateStreak } from "@/hooks/useRemoteHabits";
 import { getCrossedMilestone } from "@/types/habits";
 
 describe("example", () => {
@@ -29,6 +29,38 @@ describe("calculateStreak", () => {
     const entries = [{ habitId: "steak", date: "2026-09-25", completed: true }];
 
     expect(calculateStreak("steak", entries, "2026-09-24")).toBe(0);
+  });
+
+  it("resets the active streak after a missed day while retaining the previous run for the reset notice", () => {
+    const entries = [
+      { habitId: "steak", date: "2026-09-20", completed: true },
+      { habitId: "steak", date: "2026-09-21", completed: true },
+      { habitId: "steak", date: "2026-09-22", completed: true },
+      { habitId: "steak", date: "2026-09-24", completed: true },
+    ];
+
+    expect(calculateStreak("steak", entries, "2026-09-24")).toBe(1);
+    expect(calculateStreak("steak", entries.slice(0, 3), "2026-09-24")).toBe(0);
+    expect(calculateHistoricalStreak("steak", entries.slice(0, 3), "2026-09-24")).toBe(3);
+  });
+
+  it("shows yesterday's completion as open for today, then resets after another missed day", () => {
+    const entries = [{ habitId: "steak", date: "2026-09-23", completed: true }];
+
+    expect(calculateStreak("steak", entries, "2026-09-24")).toBe(1);
+    expect(calculateStreak("steak", entries, "2026-09-25")).toBe(0);
+  });
+
+  it("keeps the best historical run separate from the latest run", () => {
+    const entries = [
+      { habitId: "steak", date: "2026-09-20", completed: true },
+      { habitId: "steak", date: "2026-09-21", completed: true },
+      { habitId: "steak", date: "2026-09-22", completed: true },
+      { habitId: "steak", date: "2026-09-24", completed: true },
+    ];
+
+    expect(calculateLongestStreak("steak", entries)).toBe(3);
+    expect(calculateHistoricalStreak("steak", entries, "2026-09-24")).toBe(1);
   });
 
   it("continues a simulated streak from its saved entries", () => {

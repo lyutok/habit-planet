@@ -71,27 +71,23 @@ function addDays(date: string, days: number): string {
   return value.toISOString().split('T')[0];
 }
 
-export function calculateStreak(habitId: string, entries: HabitEntry[], today: string): number {
-  if (!today) return 0;
-
-  const completedDates = new Set(
+function getCompletedDates(habitId: string, entries: HabitEntry[]): Set<string> {
+  return new Set(
     entries
       .filter(entry => entry.habitId === habitId && entry.completed && entry.date)
       .map(entry => String(entry.date).split('T')[0])
       .filter(d => d !== 'undefined' && d !== 'null' && d !== ''),
   );
+}
 
+function calculateLatestStreak(completedDates: Set<string>, today: string): number {
+  if (!today) return 0;
   const todayStr = String(today).split('T')[0];
-
   const latestCompletedDate = [...completedDates]
     .filter(date => date <= todayStr)
     .sort()
     .at(-1);
   if (!latestCompletedDate) return 0;
-
-  if (latestCompletedDate !== todayStr && latestCompletedDate !== previousDate(todayStr)) {
-    return 0; // Streak is broken
-  }
 
   let streak = 0;
   let date = latestCompletedDate;
@@ -101,6 +97,46 @@ export function calculateStreak(habitId: string, entries: HabitEntry[], today: s
   }
   return streak;
 }
+
+export function calculateHistoricalStreak(habitId: string, entries: HabitEntry[], today: string): number {
+  return calculateLatestStreak(getCompletedDates(habitId, entries), today);
+}
+
+export function calculateLongestStreak(habitId: string, entries: HabitEntry[]): number {
+  const completedDates = [...getCompletedDates(habitId, entries)].sort();
+  let longestStreak = 0;
+  let currentStreak = 0;
+  let previousCompletedDate = '';
+
+  for (const date of completedDates) {
+    currentStreak = previousCompletedDate && date === addDays(previousCompletedDate, 1)
+      ? currentStreak + 1
+      : 1;
+    longestStreak = Math.max(longestStreak, currentStreak);
+    previousCompletedDate = date;
+  }
+
+  return longestStreak;
+}
+
+export function calculateStreak(habitId: string, entries: HabitEntry[], today: string): number {
+  if (!today) return 0;
+
+  const completedDates = getCompletedDates(habitId, entries);
+  const todayStr = String(today).split('T')[0];
+  const latestCompletedDate = [...completedDates]
+    .filter(date => date <= todayStr)
+    .sort()
+    .at(-1);
+  if (!latestCompletedDate) return 0;
+
+  if (latestCompletedDate !== todayStr && latestCompletedDate !== previousDate(todayStr)) {
+    return 0;
+  }
+
+  return calculateLatestStreak(completedDates, todayStr);
+}
+
 
 interface UseRemoteHabitsOptions {
   getToday?: () => string;
@@ -126,6 +162,9 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   const [loading, setLoading] = useState(true);
   const syncingSimulation = useRef(false);
   const dataRevision = useRef(0);
+  const latestLoadRequest = useRef(0);
+  const currentUserIdRef = useRef(user?.id ?? null);
+  currentUserIdRef.current = user?.id ?? null;
   // Ref to latest habits so the streak-recalc effect can read them without
   // listing `habits` as a dependency (which caused an infinite update loop).
   const habitsRef = useRef<Habit[]>([]);
@@ -139,16 +178,23 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   }, []);
 
   const loadFromDB = useCallback(async () => {
+    const requestId = ++latestLoadRequest.current;
     const revisionAtStart = dataRevision.current;
     const currentUserId = user?.id;
 
     if (!isMountedRef.current) return;
 
     if (isAnonymous || !currentUserId) {
-      setHabits(load(HABITS_KEY, []));
-      setEntries(load(ENTRIES_KEY, []));
-      setPlanetObjects(load(PLANET_KEY, []));
-      setLoading(false);
+      if (
+        requestId === latestLoadRequest.current &&
+        revisionAtStart === dataRevision.current &&
+        currentUserIdRef.current === currentUserId
+      ) {
+        setHabits(load(HABITS_KEY, []));
+        setEntries(load(ENTRIES_KEY, []));
+        setPlanetObjects(load(PLANET_KEY, []));
+        setLoading(false);
+      }
       return;
     }
 
@@ -175,7 +221,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
         name: h.name,
         icon: h.icon,
         type: h.type as HabitType,
-        streak: Math.max(h.streak ?? 0, calculateStreak(h.id, dbEntries, todayForCalc)),
+        streak: calculateStreak(h.id, dbEntries, todayForCalc),
         createdAt: h.created_at,
         updatedAt: h.updated_at,
       }));
@@ -192,7 +238,13 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
         milestone: o.milestone,
       }));
 
-      if (isMountedRef.current && !syncingSimulation.current && revisionAtStart === dataRevision.current) {
+      if (
+        isMountedRef.current &&
+        !syncingSimulation.current &&
+        requestId === latestLoadRequest.current &&
+        currentUserIdRef.current === currentUserId &&
+        revisionAtStart === dataRevision.current
+      ) {
         setHabits(dbHabits);
         setEntries(dbEntries);
         setPlanetObjects(dbObjects);
@@ -200,7 +252,13 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
     } catch (error) {
       console.error('[RemoteHabits] Error loading from DB:', error);
     } finally {
-      if (isMountedRef.current) setLoading(false);
+      if (
+        isMountedRef.current &&
+        requestId === latestLoadRequest.current &&
+        currentUserIdRef.current === currentUserId
+      ) {
+        setLoading(false);
+      }
     }
   }, [user?.id, isAnonymous]);
 
@@ -211,6 +269,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
       return;
     }
 
+    setLoading(true);
     void loadFromDB();
 
     if (isAnonymous) return;
@@ -270,11 +329,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
     const currentHabits = habitsRef.current;
     if (currentHabits.length === 0) return;
     const nextHabits = currentHabits.map(habit => {
-      const calc = calculateStreak(habit.id, entries, currentDate);
-      return {
-        ...habit,
-        streak: Math.max(habit.streak ?? 0, calc),
-      };
+      return { ...habit, streak: calculateStreak(habit.id, entries, currentDate) };
     });
     const changed = nextHabits.some((habit, index) => habit.streak !== currentHabits[index].streak);
     if (changed) {
@@ -297,6 +352,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   const addHabit = useCallback(async (name: string, type: HabitType, icon: string) => {
     const currentUserId = user?.id;
     const nowIso = new Date().toISOString();
+    dataRevision.current += 1;
 
     const newHabit: Habit = {
       id: uid(),
@@ -331,6 +387,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
 
   const deleteHabit = useCallback(async (habitId: string) => {
     const currentUserId = user?.id;
+    dataRevision.current += 1;
 
     if (!isAnonymous && currentUserId) {
       const { error: objectsError } = await supabase
@@ -365,6 +422,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
 
   const completeHabit = useCallback(async (habitId: string) => {
     if (isCompletedToday(habitId)) return;
+    dataRevision.current += 1;
 
     const t = todayFn();
     const currentUserId = isAnonymous ? getCurrentUserId() : user?.id;
@@ -481,6 +539,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   }, [habits, entries, isCompletedToday, todayFn, isAnonymous, isSimulatedDate, getCurrentUserId, user?.id]);
 
   const resetAll = useCallback(async () => {
+    dataRevision.current += 1;
     if (!isAnonymous) {
       const userId = getCurrentUserId();
       if (userId) {
@@ -502,6 +561,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   }, [isAnonymous, getCurrentUserId]);
 
   const clearLocalData = useCallback(() => {
+    dataRevision.current += 1;
     setHabits([]);
     setEntries([]);
     setPlanetObjects([]);
@@ -624,7 +684,9 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   }, [habits, entries, todayFn, isAnonymous, user?.id]);
 
   const getTotalCompletions = useCallback(() => entries.filter(e => e.completed).length, [entries]);
-  const getLongestStreak = useCallback(() => habits.length === 0 ? 0 : Math.max(...habits.map(h => h.streak), 0), [habits]);
+  const getLongestStreak = useCallback(() => (
+    habits.length === 0 ? 0 : Math.max(...habits.map(h => calculateLongestStreak(h.id, entries)), 0)
+  ), [habits, entries]);
   const getCurrentStreak = useCallback(() => habits.length === 0 ? 0 : Math.max(...habits.map(h => h.streak), 0), [habits]);
   const getTodayCount = useCallback(() => habits.filter(h => isCompletedToday(h.id)).length, [habits, isCompletedToday]);
 

@@ -45,28 +45,33 @@ export function useAuth() {
   });
 
   useEffect(() => {
+    let mounted = true;
+    let authEventReceived = false;
+    let updateSequence = 0;
+
     const updateState = async (session: Session | null) => {
-    console.log('[useAuth] updateState called with session:', session?.user?.id);
-    try {
-      const user = session?.user ?? null;
-      const isAnonymous = !session;
-      let role: UserRole | null = null;
-      let isAdmin = false;
-      if (user) {
-        role = await fetchUserRole(user.id);
-        isAdmin = role === 'admin';
-      }
-      console.log('[useAuth] Setting auth state:', { user: user?.id, isAnonymous, role, isAdmin });
-      setAuthState({
-        user,
-        session,
-        loading: false,
-        isAnonymous,
-        role,
-        isAdmin,
-      });
+      const sequence = ++updateSequence;
+      try {
+        const user = session?.user ?? null;
+        const isAnonymous = !session;
+        let role: UserRole | null = null;
+        let isAdmin = false;
+        if (user) {
+          role = await fetchUserRole(user.id);
+          isAdmin = role === 'admin';
+        }
+        if (!mounted || sequence !== updateSequence) return;
+        setAuthState({
+          user,
+          session,
+          loading: false,
+          isAnonymous,
+          role,
+          isAdmin,
+        });
       } catch (e) {
         console.warn('[Auth] updateState error:', e);
+        if (!mounted || sequence !== updateSequence) return;
         setAuthState({
           user: session?.user ?? null,
           session,
@@ -79,18 +84,20 @@ export function useAuth() {
     };
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[useAuth] Initial session loaded:', session?.user?.id);
-      updateState(session);
+      if (!authEventReceived) void updateState(session);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log('[useAuth] Auth state change event:', _event, 'session user:', session?.user?.id);
-        await updateState(session);
+      (_event, session) => {
+        authEventReceived = true;
+        window.setTimeout(() => { void updateState(session); }, 0);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {

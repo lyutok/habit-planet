@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { PlanetScene } from '@/components/PlanetScene';
 import { HabitPanel } from '@/components/HabitPanel';
 import { AddHabitModal } from '@/components/AddHabitModal';
-import { calculateStreak, useRemoteHabits } from '@/hooks/useRemoteHabits';
+import { calculateHistoricalStreak, calculateStreak, useRemoteHabits } from '@/hooks/useRemoteHabits';
 import { useDevDate } from '@/hooks/useDevDate';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MilestoneCelebrationDialog } from '@/components/MilestoneCelebrationDialog';
@@ -102,15 +102,16 @@ const Index = () => {
       getToday(),
     );
     const previousStreak = calculateStreak(habitId, entries, getToday());
+    const previousHistoricalStreak = calculateHistoricalStreak(habitId, entries, getToday());
     const milestone = habit ? getCrossedMilestone(previousStreak, completedStreak) : undefined;
 
     // Detect streak reset: the habit had a streak but a gap broke it
-    const wasStreakReset = previousStreak > 0 && completedStreak === 1;
+    const wasStreakReset = previousStreak === 0 && previousHistoricalStreak > 0 && completedStreak === 1;
 
     await completeHabit(habitId);
 
     if (habit && wasStreakReset) {
-      setStreakReset({ lostStreak: previousStreak, habitName: habit.name });
+      setStreakReset({ lostStreak: previousHistoricalStreak, habitName: habit.name });
     } else if (habit && milestone) {
       setMilestoneCelebration({ milestone, habitName: habit.name, habitId });
     }

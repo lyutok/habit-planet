@@ -180,7 +180,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   const loadFromDB = useCallback(async () => {
     const requestId = ++latestLoadRequest.current;
     const revisionAtStart = dataRevision.current;
-    const currentUserId = user?.id;
+    const currentUserId = user?.id ?? null;
 
     if (!isMountedRef.current) return;
 

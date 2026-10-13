@@ -1,7 +1,4 @@
-import { Suspense, useState, useEffect, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
-import * as THREE from 'three';
-import { PlanetScene } from '@/components/PlanetScene';
+import { Suspense, lazy, useState, useEffect, useCallback } from 'react';
 import { HabitPanel } from '@/components/HabitPanel';
 import { AddHabitModal } from '@/components/AddHabitModal';
 import { calculateHistoricalStreak, calculateStreak, useRemoteHabits } from '@/hooks/useRemoteHabits';
@@ -34,6 +31,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+
+const PlanetCanvas = lazy(() => import('@/components/PlanetCanvas'));
 
 function LoadingPlanet() {
   return (
@@ -655,28 +654,16 @@ const Index = () => {
             </div>
           )}
 
-          <Canvas
-            camera={{ position: [0, 1.5, isMobile ? 7.5 : 5.8], fov: 46 }}
-            shadows
-            style={{ background: 'transparent' }}
-            gl={{
-              antialias: true,
-              alpha: true,
-              toneMapping: THREE.ACESFilmicToneMapping,
-              toneMappingExposure: 1.15,
-              preserveDrawingBuffer: true,
-            }}
-          >
-            <Suspense fallback={null}>
-              <PlanetScene
-                planetObjects={planetObjects}
-                newObjectId={newObjectId}
-                sparklePos={sparklePos}
-                longestStreak={longestStreak}
-                planetStyle={planetStyle}
-              />
-            </Suspense>
-          </Canvas>
+          <Suspense fallback={null}>
+            <PlanetCanvas
+              isMobile={isMobile}
+              planetObjects={planetObjects}
+              newObjectId={newObjectId}
+              sparklePos={sparklePos}
+              longestStreak={longestStreak}
+              planetStyle={planetStyle}
+            />
+          </Suspense>
         </main>
       </div>
 

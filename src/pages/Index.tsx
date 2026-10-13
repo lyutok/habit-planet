@@ -400,7 +400,10 @@ const Index = () => {
 
                 {isAnonymous ? (
                   <div className="space-y-3">
+                    <label htmlFor="account-email" className="sr-only">Email</label>
                     <Input
+                      id="account-email"
+                      name="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -408,7 +411,10 @@ const Index = () => {
                       autoComplete="email"
                       disabled={authPending}
                     />
+                    <label htmlFor="account-password" className="sr-only">Password</label>
                     <Input
+                      id="account-password"
+                      name="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}

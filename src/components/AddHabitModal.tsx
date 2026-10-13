@@ -66,10 +66,12 @@ export function AddHabitModal({ onClose, onAdd, disabled = false }: AddHabitModa
 
         {/* Habit Name */}
         <div className="mb-5">
-          <label className="mb-2 block text-sm font-bold text-foreground/80">
+          <label htmlFor="habit-name" className="mb-2 block text-sm font-bold text-foreground/80">
             Habit Name
           </label>
           <Input
+            id="habit-name"
+            name="habitName"
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="e.g. Read 30 minutes..."

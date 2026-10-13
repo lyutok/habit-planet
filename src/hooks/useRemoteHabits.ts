@@ -163,6 +163,8 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   const syncingSimulation = useRef(false);
   const dataRevision = useRef(0);
   const latestLoadRequest = useRef(0);
+  const loadInProgress = useRef(false);
+  const refreshRequested = useRef(false);
   const currentUserIdRef = useRef(user?.id ?? null);
   currentUserIdRef.current = user?.id ?? null;
   // Ref to latest habits so the streak-recalc effect can read them without
@@ -178,11 +180,16 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
   }, []);
 
   const loadFromDB = useCallback(async () => {
+    if (!isMountedRef.current) return;
+    if (loadInProgress.current) {
+      refreshRequested.current = true;
+      return;
+    }
+
+    loadInProgress.current = true;
     const requestId = ++latestLoadRequest.current;
     const revisionAtStart = dataRevision.current;
     const currentUserId = user?.id ?? null;
-
-    if (!isMountedRef.current) return;
 
     if (isAnonymous || !currentUserId) {
       if (
@@ -194,6 +201,11 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
         setEntries(load(ENTRIES_KEY, []));
         setPlanetObjects(load(PLANET_KEY, []));
         setLoading(false);
+      }
+      loadInProgress.current = false;
+      if (refreshRequested.current && isMountedRef.current) {
+        refreshRequested.current = false;
+        void loadFromDB();
       }
       return;
     }
@@ -258,6 +270,11 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
         currentUserIdRef.current === currentUserId
       ) {
         setLoading(false);
+      }
+      loadInProgress.current = false;
+      if (refreshRequested.current && isMountedRef.current) {
+        refreshRequested.current = false;
+        void loadFromDB();
       }
     }
   }, [user?.id, isAnonymous]);
@@ -382,6 +399,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
       }
     }
 
+    dataRevision.current += 1;
     setHabits(prev => [...prev, newHabit]);
   }, [isAnonymous, user?.id]);
 
@@ -415,6 +433,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
       }
     }
 
+    dataRevision.current += 1;
     setHabits(prev => prev.filter(h => h.id !== habitId));
     setEntries(prev => prev.filter(e => e.habitId !== habitId));
     setPlanetObjects(prev => prev.filter(object => object.habitId !== habitId));
@@ -442,6 +461,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
       if (error) throw error;
       setEntries(prev => [...prev.filter(e => !(e.habitId === habitId && e.date === t)), newEntry]);
     }
+    dataRevision.current += 1;
 
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
@@ -550,6 +570,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
         ]);
       }
     }
+    dataRevision.current += 1;
     setHabits([]);
     setEntries([]);
     setPlanetObjects([]);
@@ -679,6 +700,7 @@ export function useRemoteHabits({ getToday, isSimulatedDate = false }: UseRemote
         streak: calculateStreak(h.id, [...entries, ...newEntries], finalDate),
       })));
     } finally {
+      dataRevision.current += 1;
       syncingSimulation.current = false;
     }
   }, [habits, entries, todayFn, isAnonymous, user?.id]);
